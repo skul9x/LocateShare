@@ -23,17 +23,17 @@ import java.util.Locale
 class CarActivity : AppCompatActivity() {
 
     private lateinit var tvLocation: TextView
+    private lateinit var tvLocationName: TextView
     private lateinit var btnOpenMap: Button
     
-    private val handler = Handler(Looper.getMainLooper())
     private var currentUrl: String = ""
-    private var isPolling = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_car)
 
         tvLocation = findViewById(R.id.tvLocation)
+        tvLocationName = findViewById(R.id.tvLocationName)
         btnOpenMap = findViewById(R.id.btnOpenMap)
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnReload = findViewById<Button>(R.id.btnReload)
@@ -64,27 +64,6 @@ class CarActivity : AppCompatActivity() {
         btnFavorites.setOnClickListener {
             openMap("https://goo.gl/maps/GvWoy8V6Dn8hRTM67")
         }
-
-        startPolling()
-    }
-
-    private fun startPolling() {
-        val prefs = getSharedPreferences("LocateSharePrefs", Context.MODE_PRIVATE)
-        val serverUrl = prefs.getString("server_url", "")
-
-        if (serverUrl.isNullOrEmpty()) {
-            tvLocation.text = "Vui lòng cấu hình URL Server!"
-            return
-        }
-
-        val pollRunnable = object : Runnable {
-            override fun run() {
-                if (!isPolling) return
-                fetchLocation(serverUrl)
-                handler.postDelayed(this, 3000) // Poll every 3 seconds
-            }
-        }
-        handler.post(pollRunnable)
     }
 
     private fun fetchLocation(baseUrl: String) {
@@ -96,29 +75,31 @@ class CarActivity : AppCompatActivity() {
                 }
                 
                 val responseString = responseBody.string()
-                // AppLogger.log("Polling Response: $responseString") // Uncomment if needed, but spammy
-
-                // Simple manual parse
-                if (responseString.contains("\"url\":\"")) {
-                    var extractedUrl = responseString.substringAfter("\"url\":\"").substringBefore("\"")
-                    
-                    // Fix JSON escaping (https:\/\/ -> https://)
-                    extractedUrl = extractedUrl.replace("\\/", "/")
-                    
-                    if (extractedUrl.isNotEmpty() && extractedUrl != currentUrl) {
-                        currentUrl = extractedUrl
-                        updateUI(currentUrl)
-                    }
+                
+                // Parse JSON
+                val jsonObject = org.json.JSONObject(responseString)
+                val url = jsonObject.optString("url")
+                val name = jsonObject.optString("name")
+                
+                if (url.isNotEmpty()) {
+                    currentUrl = url
+                    updateUI(url, name)
                 }
             } catch (e: Exception) {
-                // Silent fail on polling error
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    private fun updateUI(url: String) {
+    private fun updateUI(url: String, name: String) {
         tvLocation.text = url
-        tvLocation.setTextColor(android.graphics.Color.WHITE)
+        
+        val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        
+        // Chi hien thi gio cap nhat, khong hien thi ten dia diem nua
+        tvLocationName.text = "🕒 Cập nhật: $currentTime"
     }
 
     private fun openMap(url: String) {
@@ -169,9 +150,4 @@ class CarActivity : AppCompatActivity() {
         Toast.makeText(this, "Đang xác thực...", Toast.LENGTH_SHORT).show()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        isPolling = false
-        handler.removeCallbacksAndMessages(null)
-    }
 }

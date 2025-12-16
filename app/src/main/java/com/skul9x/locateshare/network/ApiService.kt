@@ -11,15 +11,13 @@ data class LocationData(
     @SerializedName("url") val url: String
 )
 
-data class StatusResponse(
-    @SerializedName("status") val status: String,
-    @SerializedName("message") val message: String
-)
-
 interface ApiService {
     @retrofit2.http.FormUrlEncoded
     @POST("index.php")
-    suspend fun sendLocation(@retrofit2.http.Field("url") url: String): okhttp3.ResponseBody
+    suspend fun sendLocation(
+        @retrofit2.http.Field("url") url: String,
+        @retrofit2.http.Field("name") name: String
+    ): okhttp3.ResponseBody
 
     @GET("index.php")
     suspend fun getLocation(): okhttp3.ResponseBody

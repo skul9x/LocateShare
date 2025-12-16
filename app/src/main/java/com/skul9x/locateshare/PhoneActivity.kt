@@ -45,9 +45,15 @@ class PhoneActivity : AppCompatActivity() {
                 val urlRegex = "(https?://\\S+)".toRegex()
                 val matchResult = urlRegex.find(sharedText)
                 val extractedUrl = matchResult?.value
-
+                
                 if (extractedUrl != null) {
-                    sendLocationToServer(extractedUrl)
+                    // Show loading
+                    statusText.text = "Đang gửi địa điểm..."
+                    progressBar.visibility = View.VISIBLE
+                    btnBack.visibility = View.GONE
+                    
+                    // Send directly without fetching name
+                    sendLocationToServer(extractedUrl, "")
                 } else {
                     showError("Không tìm thấy link Google Maps hợp lệ")
                 }
@@ -62,7 +68,7 @@ class PhoneActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendLocationToServer(url: String) {
+    private fun sendLocationToServer(url: String, name: String) {
         val prefs = getSharedPreferences("LocateSharePrefs", Context.MODE_PRIVATE)
         val serverUrl = prefs.getString("server_url", "")
 
@@ -76,22 +82,22 @@ class PhoneActivity : AppCompatActivity() {
             com.skul9x.locateshare.network.HostingVerifier.verify(this, serverUrl) { success ->
                 if (success) {
                     // Retry sending
-                    performSend(serverUrl, url)
+                    performSend(serverUrl, url, name)
                 } else {
                     showError("Không thể xác thực hosting. Vui lòng thử lại.")
                 }
             }
         } else {
-            performSend(serverUrl, url)
+            performSend(serverUrl, url, name)
         }
     }
 
-    private fun performSend(serverUrl: String, url: String) {
+    private fun performSend(serverUrl: String, url: String, name: String) {
         lifecycleScope.launch {
             try {
                 val apiService = RetrofitClient.getClient(serverUrl).create(ApiService::class.java)
                 val responseBody = withContext(Dispatchers.IO) {
-                    apiService.sendLocation(url)
+                    apiService.sendLocation(url, name)
                 }
 
                 val responseString = responseBody.string()
@@ -103,7 +109,7 @@ class PhoneActivity : AppCompatActivity() {
                     com.skul9x.locateshare.network.RetrofitClient.cookie = ""
                     com.skul9x.locateshare.network.HostingVerifier.verify(this@PhoneActivity, serverUrl) { success ->
                         if (success) {
-                            performSend(serverUrl, url)
+                            performSend(serverUrl, url, name)
                         } else {
                             showError("Xác thực thất bại. Vui lòng thử lại.")
                         }

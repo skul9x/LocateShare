@@ -37,7 +37,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Đang chờ địa điểm..."
-        android:textSize="18sp"
+        android:textSize="14sp"
         android:textColor="#AAAAAA"
         android:maxLines="1"
         android:ellipsize="end"
@@ -47,6 +47,21 @@
         android:gravity="center"
         android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/btnBack"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Location Name -->
+    <TextView
+        android:id="@+id/tvLocationName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvLocation"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -66,7 +81,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnOpenMap"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvLocation" />
+        app:layout_constraintTop_toBottomOf="@id/tvLocationName" />
 
     <!-- Bottom Center: Open Map Button (2/4 width) -->
     <Button
@@ -86,7 +101,7 @@
         app:layout_constraintStart_toEndOf="@id/btnFavorites"
         app:layout_constraintEnd_toStartOf="@id/btnReload"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvLocation" />
+        app:layout_constraintTop_toBottomOf="@id/tvLocationName" />
 
     <!-- Bottom Right: Reload Button (1/4 width) -->
     <Button
@@ -104,6 +119,6 @@
         app:layout_constraintStart_toEndOf="@id/btnOpenMap"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvLocation" />
+        app:layout_constraintTop_toBottomOf="@id/tvLocationName" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
