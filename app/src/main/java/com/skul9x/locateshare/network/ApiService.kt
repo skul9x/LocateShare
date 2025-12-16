@@ -35,6 +35,10 @@ object RetrofitClient {
         val client = okhttp3.OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
+                
+                // Identify as App
+                requestBuilder.addHeader("X-Requested-With", "com.skul9x.locateshare")
+                
                 if (cookie.isNotEmpty()) {
                     requestBuilder.addHeader("Cookie", cookie)
                     requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
