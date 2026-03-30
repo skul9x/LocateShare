@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "schema_version": "1.1.0",
+    "awf_version": "3.3.0"
+  },
+  "project": {
+    "name": "LocateShare",
+    "type": "Android App + PHP Backend",
+    "status": "Discovery / Analysis"
+  },
+  "tech_stack": {
+    "frontend": "Kotlin (Android), Retrofit, OkHttp",
+    "backend": "PHP, Tailwind CSS (Web UI)",
+    "database": "File-based (location.txt stores JSON: url, name, updated)",
+    "mobile_ui": "View-based (Activity)"
+  },
+  "database_schema": {
+    "summary": "Dữ liệu được lưu trong file `location.txt` dưới định dạng JSON.",
+    "tables": [
+      {
+        "name": "location.txt",
+        "columns": [
+          "url (string): Link Google Maps",
+          "name (string): Tên địa điểm",
+          "updated (timestamp): Thời gian cập nhật"
+        ]
+      }
+    ]
+  },
+  "api_endpoints": [
+    {
+      "path": "POST /index.php",
+      "method": "POST",
+      "params": "url (required), name (optional)",
+      "explained": "Cập nhật địa điểm mới từ app hoặc web dashboard. Hỗ trợ JSON input hoặc Form-data."
+    },
+    {
+      "path": "GET /index.php",
+      "method": "GET",
+      "explained": "Lấy thông tin địa điểm cuối cùng được lưu để hiển thị hoặc mở bản đồ."
+    }
+  ],
+  "business_rules": [
+    "URL gửi lên phải là link Google Maps hợp lệ.",
+    "Hệ thống hỗ trợ cơ chế bypass bot protection của hosting miễn phí bằng Cookie."
+  ],
+  "features": [
+    "Phone Mode: Chia sẻ từ Maps vào App để gửi lên server.",
+    "Car Mode: Tự động tải địa điểm và mở app bản đồ khi có thay đổi.",
+    "Web Dashboard: Xem và cập nhật link thủ công qua trình duyệt.",
+    "InfinityFree Support: Tự động chạy WebView ẩn để lấy cookie __test."
+  ],
+  "knowledge_items": {
+    "patterns": [
+      "Hybrid PHP/Android architecture",
+      "WebView hidden cookie injection"
+    ],
+    "gotchas": [
+      "Hosting miễn phí thường có JavaScript Challenge yêu cầu cookie."
+    ]
+  }
+}

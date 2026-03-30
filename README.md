@@ -1,39 +1,37 @@
-# 📍 LocateShare
+# LocateShare
 
-Ứng dụng Android giúp chia sẻ địa điểm từ điện thoại sang màn hình ô tô (hoặc thiết bị khác) một cách dễ dàng.
+**LocateShare** là một dự án Android (Kotlin) đơn giản hỗ trợ chia sẻ liên kết Google Maps nhanh chóng từ điện thoại đang sử dụng gửi xuống màn hình Android trên ô tô (hoặc điện thoại khác dùng như màn hình phụ).
 
-## ✨ Tính năng chính
+Được nâng cấp mạnh mẽ từ kiến trúc PHP sang **Supabase**, hệ thống giờ đây đã loại bỏ hoàn toàn các rào cản hosting miễn phí, cho phép đồng bộ realtime các vị trí và cả quản lý danh sách địa điểm yêu thích của riêng bạn!
 
-- **Chia sẻ từ Google Maps:** Nhận link chia sẻ trực tiếp từ Google Maps (qua Intent).
-- **Phone Mode (Gửi):** Gửi link địa điểm lên server.
-- **Car Mode (Nhận):** Tự động nhận địa điểm mới nhất và mở bản đồ.
-- **Hỗ trợ Hosting miễn phí:** Tích hợp cơ chế xác thực cookie để hoạt động tốt trên các hosting như `free.nf` (InfinityFree).
+## ✨ Tính năng nổi bật
 
-## 🚀 Cài đặt & Sử dụng
+- 📱 **Chế độ Điện Thoại (Gửi):** Mở app Google Maps, ấn nút Share và chọn LocateShare. Link sẽ auto gửi lên Cloud DB ngay lập tức.
+- 🚗 **Chế độ Xe Hơi (Nhận):** Tự động fetch tọa độ trên Cloud. Bấm "MỞ BẢN ĐỒ" là nhảy ngay vào Google Maps để điều hướng.
+- ⭐ **Danh sách Ưa Thích (Favorites):**
+  - Quản lý kho điểm đến ưa thích ngay trong App (Cài đặt).
+  - Không giới hạn số lượng mục yêu thích.
+  - **Fav of Favs (⭐):** Đánh dấu sao cho địa điểm thường đi nhất. Nhấn nút "Ưa thích" ngay trên màn hình Xe Hơi để mở bản đồ ngay tới điểm đó trong 1 nốt nhạc!
+  - Ấn giữ nút "Ưa thích" để mở màn hình popup chọn 1 trong các điểm đã lưu.
+- ⚡ **Backend mạnh mẽ:** Data được sync qua Supabase REST API (đã thiết lập RLS Policy bảo mật với Anon Key). Không lo Bypass cookie hay PHP Hosting lỗi nữa.
 
-### 1. Backend Setup
-- Upload file trong thư mục `backend/` lên hosting PHP.
-- Tạo file `location.txt` (hoặc để script tự tạo) và set quyền ghi (777).
-
-### 2. App Setup
-- Cài đặt file APK lên cả điện thoại và màn hình xe.
-- Mở app, nhập URL server (VD: `https://your-site.free.nf/`).
-- Chọn chế độ mặc định:
-    - **Điện thoại:** Chọn "Phone Mode".
-    - **Xe:** Chọn "Car Mode".
-
-### 3. Cách dùng
-1. Trên điện thoại, tìm địa điểm trên Google Maps.
-2. Chọn **Share** -> chọn **LocateShare**.
-3. Màn hình xe sẽ tự động nhận diện và hiển thị địa điểm (hoặc bấm Reload).
-
-## 🛠️ Công nghệ sử dụng
+## 🛠 Tech Stack
 
 - **Ngôn ngữ:** Kotlin
-- **Networking:** Retrofit + OkHttp
-- **Web Auth:** WebView (để bypass anti-bot của free hosting)
-- **Architecture:** Mô hình đơn giản, xử lý trực tiếp trong Activity.
+- **Networking:** Retrofit2 + Gson + OkHttp 
+- **Database:** Supabase (PostgreSQL - REST)
+- **Architecture:** Standard Android Activities & Views
 
-## 📝 Lưu ý
+## 🗂 Cấu trúc DB Supabase 
 
-- App sử dụng cơ chế lưu cookie vào SharedPreferences để duy trì đăng nhập với hosting miễn phí, giúp trải nghiệm mượt mà hơn mà không cần xác thực lại liên tục.
+**1. Bảng `current_location` (ID: 1 cố định):**
+Lưu trữ tọa độ hiện tại được gửi từ điện thoại.
+
+**2. Bảng `favorite_locations`:**
+Lưu trữ danh sách các điểm ưa thích với trạng thái `is_starred` (chỉ 1 điểm được bật sao cùng lúc).
+
+## 🚀 Tự động hóa Workflow (CI/CD)
+Mọi lịch sử quá trình AI Build và Agent Data được đồng bộ trong thư mục `.brain`.
+
+---
+*Dự án dành cho cá nhân, open-source.*

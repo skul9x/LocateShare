@@ -1,17 +1,16 @@
 package com.skul9x.locateshare
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.skul9x.locateshare.network.ApiService
+import com.skul9x.locateshare.network.FavoriteLocation
 import com.skul9x.locateshare.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,8 +24,10 @@ class CarActivity : AppCompatActivity() {
     private lateinit var tvLocation: TextView
     private lateinit var tvLocationName: TextView
     private lateinit var btnOpenMap: Button
-    
+
     private var currentUrl: String = ""
+
+    private val api by lazy { RetrofitClient.getApiService() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,21 +39,22 @@ class CarActivity : AppCompatActivity() {
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnReload = findViewById<Button>(R.id.btnReload)
         val btnFavorites = findViewById<Button>(R.id.btnFavorites)
+        val btnSettings = findViewById<ImageButton>(R.id.btnSettings)
 
-        btnBack.setOnClickListener {
-            finish()
+        // Back
+        btnBack.setOnClickListener { finish() }
+
+        // Settings
+        btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        // Reload: Fetch current location from Supabase
         btnReload.setOnClickListener {
-            val prefs = getSharedPreferences("LocateSharePrefs", Context.MODE_PRIVATE)
-            val serverUrl = prefs.getString("server_url", "") ?: ""
-            if (serverUrl.isNotEmpty()) {
-                verifyHosting(serverUrl)
-            } else {
-                Toast.makeText(this, "Chưa cấu hình URL!", Toast.LENGTH_SHORT).show()
-            }
+            fetchCurrentLocation()
         }
 
+        // Open Map: Mở URL hiện tại trên bản đồ
         btnOpenMap.setOnClickListener {
             if (currentUrl.isNotEmpty()) {
                 openMap(currentUrl)
@@ -61,33 +63,46 @@ class CarActivity : AppCompatActivity() {
             }
         }
 
+        // Favorites - Click ngắn: Mở địa điểm đã đánh sao ⭐
         btnFavorites.setOnClickListener {
-            openMap("https://goo.gl/maps/GvWoy8V6Dn8hRTM67")
+            openStarredFavorite()
         }
+
+        // Favorites - Long press: Hiện popup danh sách tất cả
+        btnFavorites.setOnLongClickListener {
+            showFavoritesPopup()
+            true
+        }
+
+        // Auto-load current location khi vào
+        fetchCurrentLocation()
     }
 
-    private fun fetchLocation(baseUrl: String) {
+    override fun onResume() {
+        super.onResume()
+        // Refresh khi quay lại từ Settings
+        fetchCurrentLocation()
+    }
+
+    private fun fetchCurrentLocation() {
         lifecycleScope.launch {
             try {
-                val apiService = RetrofitClient.getClient(baseUrl).create(ApiService::class.java)
-                val responseBody = withContext(Dispatchers.IO) {
-                    apiService.getLocation()
+                val locations = withContext(Dispatchers.IO) {
+                    api.getCurrentLocation()
                 }
-                
-                val responseString = responseBody.string()
-                
-                // Parse JSON
-                val jsonObject = org.json.JSONObject(responseString)
-                val url = jsonObject.optString("url")
-                val name = jsonObject.optString("name")
-                
-                if (url.isNotEmpty()) {
-                    currentUrl = url
-                    updateUI(url, name)
+                if (locations.isNotEmpty()) {
+                    val loc = locations[0]
+                    if (loc.url.isNotEmpty()) {
+                        currentUrl = loc.url
+                        updateUI(loc.url, loc.name)
+                    } else {
+                        tvLocation.text = "Chưa có địa điểm nào"
+                        tvLocationName.text = ""
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CarActivity, "Lỗi tải: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -95,11 +110,62 @@ class CarActivity : AppCompatActivity() {
 
     private fun updateUI(url: String, name: String) {
         tvLocation.text = url
-        
         val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-        
-        // Chi hien thi gio cap nhat, khong hien thi ten dia diem nua
-        tvLocationName.text = "🕒 Cập nhật: $currentTime"
+        tvLocationName.text = if (name.isNotEmpty()) {
+            "📍 $name  •  🕒 $currentTime"
+        } else {
+            "🕒 Cập nhật: $currentTime"
+        }
+    }
+
+    private fun openStarredFavorite() {
+        lifecycleScope.launch {
+            try {
+                val starred = withContext(Dispatchers.IO) {
+                    api.getStarredFavorite()
+                }
+                if (starred.isNotEmpty()) {
+                    openMap(starred[0].url)
+                } else {
+                    Toast.makeText(this@CarActivity, "Chưa có địa điểm mặc định ⭐\nẤn giữ để chọn từ danh sách", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showFavoritesPopup() {
+        lifecycleScope.launch {
+            try {
+                val favorites = withContext(Dispatchers.IO) {
+                    api.getFavorites()
+                }
+
+                if (favorites.isEmpty()) {
+                    Toast.makeText(this@CarActivity, "Chưa có địa điểm ưa thích!\nVào ⚙️ Settings để thêm", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+
+                // Build display names with star indicator
+                val displayNames = favorites.map { fav ->
+                    val star = if (fav.isStarred) "⭐ " else "    "
+                    "$star${fav.name}"
+                }.toTypedArray()
+
+                AlertDialog.Builder(this@CarActivity, android.R.style.Theme_DeviceDefault_Dialog)
+                    .setTitle("📍 Chọn địa điểm ưa thích")
+                    .setItems(displayNames) { _, which ->
+                        val selected = favorites[which]
+                        openMap(selected.url)
+                    }
+                    .setNegativeButton("Đóng", null)
+                    .show()
+
+            } catch (e: Exception) {
+                Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun openMap(url: String) {
@@ -117,37 +183,4 @@ class CarActivity : AppCompatActivity() {
             Toast.makeText(this, "Không thể mở bản đồ", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private fun verifyHosting(url: String) {
-        val dialog = android.app.Dialog(this)
-        dialog.setContentView(R.layout.dialog_webview)
-        val webView = dialog.findViewById<android.webkit.WebView>(R.id.webView)
-        
-        webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true
-        webView.settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-        
-        webView.webViewClient = object : android.webkit.WebViewClient() {
-            override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                val cookies = android.webkit.CookieManager.getInstance().getCookie(url)
-                if (cookies != null && cookies.contains("__test")) {
-                    com.skul9x.locateshare.network.RetrofitClient.saveCookie(this@CarActivity, cookies)
-                    Toast.makeText(this@CarActivity, "Đã xác thực! Đang tải lại...", Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
-                    // Reload data immediately
-                    val prefs = getSharedPreferences("LocateSharePrefs", Context.MODE_PRIVATE)
-                    val serverUrl = prefs.getString("server_url", "") ?: ""
-                    if (serverUrl.isNotEmpty()) {
-                        fetchLocation(serverUrl)
-                    }
-                }
-            }
-        }
-        
-        webView.loadUrl(url)
-        dialog.show()
-        Toast.makeText(this, "Đang xác thực...", Toast.LENGTH_SHORT).show()
-    }
-
 }

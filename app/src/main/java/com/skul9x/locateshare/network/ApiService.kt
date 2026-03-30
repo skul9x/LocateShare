@@ -1,103 +1,159 @@
 package com.skul9x.locateshare.network
 
-import android.content.Context
 import com.google.gson.annotations.SerializedName
+import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
+import retrofit2.http.*
 
-data class LocationData(
-    @SerializedName("url") val url: String
+// ============ Data Classes ============
+
+data class CurrentLocation(
+    @SerializedName("id") val id: Int = 1,
+    @SerializedName("url") val url: String = "",
+    @SerializedName("name") val name: String = "",
+    @SerializedName("updated_at") val updatedAt: String? = null
 )
 
-interface ApiService {
-    @retrofit2.http.FormUrlEncoded
-    @POST("index.php")
-    suspend fun sendLocation(
-        @retrofit2.http.Field("url") url: String,
-        @retrofit2.http.Field("name") name: String
-    ): okhttp3.ResponseBody
+data class FavoriteLocation(
+    @SerializedName("id") val id: Long = 0,
+    @SerializedName("name") val name: String = "",
+    @SerializedName("url") val url: String = "",
+    @SerializedName("is_starred") val isStarred: Boolean = false,
+    @SerializedName("created_at") val createdAt: String? = null
+)
 
-    @GET("index.php")
-    suspend fun getLocation(): okhttp3.ResponseBody
+data class UpdateCurrentLocation(
+    @SerializedName("url") val url: String,
+    @SerializedName("name") val name: String
+)
+
+data class InsertFavorite(
+    @SerializedName("name") val name: String,
+    @SerializedName("url") val url: String,
+    @SerializedName("is_starred") val isStarred: Boolean = false
+)
+
+data class UpdateFavorite(
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("url") val url: String? = null,
+    @SerializedName("is_starred") val isStarred: Boolean? = null
+)
+
+data class UpdateStarred(
+    @SerializedName("is_starred") val isStarred: Boolean
+)
+
+// ============ API Interface ============
+
+interface ApiService {
+
+    // --- Current Location ---
+
+    @GET("current_location")
+    suspend fun getCurrentLocation(
+        @Query("select") select: String = "*",
+        @Query("id") id: String = "eq.1"
+    ): List<CurrentLocation>
+
+    @PATCH("current_location")
+    suspend fun updateCurrentLocation(
+        @Query("id") id: String = "eq.1",
+        @Body body: UpdateCurrentLocation
+    ): ResponseBody
+
+    // --- Favorite Locations ---
+
+    @GET("favorite_locations")
+    suspend fun getFavorites(
+        @Query("select") select: String = "*",
+        @Query("order") order: String = "is_starred.desc,created_at.desc"
+    ): List<FavoriteLocation>
+
+    @GET("favorite_locations")
+    suspend fun getStarredFavorite(
+        @Query("select") select: String = "*",
+        @Query("is_starred") isStarred: String = "eq.true",
+        @Query("limit") limit: Int = 1
+    ): List<FavoriteLocation>
+
+    @POST("favorite_locations")
+    suspend fun addFavorite(
+        @Body body: InsertFavorite
+    ): ResponseBody
+
+    @PATCH("favorite_locations")
+    suspend fun updateFavorite(
+        @Query("id") id: String,
+        @Body body: UpdateFavorite
+    ): ResponseBody
+
+    @PATCH("favorite_locations")
+    suspend fun unstarAll(
+        @Query("is_starred") isStarred: String = "eq.true",
+        @Body body: UpdateStarred
+    ): ResponseBody
+
+    @DELETE("favorite_locations")
+    suspend fun deleteFavorite(
+        @Query("id") id: String
+    ): ResponseBody
 }
 
+// ============ Retrofit Client ============
+
 object RetrofitClient {
+
     private var retrofit: Retrofit? = null
+
     private val gson = com.google.gson.GsonBuilder()
         .setLenient()
         .create()
-    
-    private const val PREFS_NAME = "LocateSharePrefs"
-    private const val KEY_COOKIE = "auth_cookie"
-    
-    var cookie: String = ""
 
-    // Save cookie to SharedPreferences
-    fun saveCookie(context: Context, cookieValue: String) {
-        cookie = cookieValue
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_COOKIE, cookieValue)
-            .apply()
-    }
-    
-    // Load cookie from SharedPreferences
-    fun loadCookie(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        cookie = prefs.getString(KEY_COOKIE, "") ?: ""
-    }
-    
-    // Clear saved cookie
-    fun clearCookie(context: Context) {
-        cookie = ""
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .remove(KEY_COOKIE)
-            .apply()
-    }
-
-    fun getClient(baseUrl: String): Retrofit {
-        val client = okhttp3.OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val requestBuilder = chain.request().newBuilder()
-                
-                // Identify as App
-                requestBuilder.addHeader("X-Requested-With", "com.skul9x.locateshare")
-                
-                if (cookie.isNotEmpty()) {
-                    requestBuilder.addHeader("Cookie", cookie)
-                    requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+    fun getClient(): Retrofit {
+        if (retrofit == null) {
+            val client = OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .addHeader("apikey", SupabaseConfig.ANON_KEY)
+                        .addHeader("Authorization", "Bearer ${SupabaseConfig.ANON_KEY}")
+                        .addHeader("Content-Type", "application/json")
+                        .addHeader("Prefer", "return=representation")
+                        .build()
+                    chain.proceed(request)
                 }
-                chain.proceed(requestBuilder.build())
-            }
-            .build()
+                .build()
 
-        if (retrofit == null || retrofit?.baseUrl().toString() != baseUrl) {
             retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(SupabaseConfig.BASE_URL)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build()
         }
         return retrofit!!
     }
+
+    fun getApiService(): ApiService {
+        return getClient().create(ApiService::class.java)
+    }
 }
+
+// ============ Logger ============
 
 object AppLogger {
     private val logs = StringBuilder()
 
     fun log(message: String) {
-        val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+        val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+            .format(java.util.Date())
         logs.append("[$timestamp] $message\n\n")
     }
 
     fun getLogs(): String {
         return logs.toString()
     }
-    
+
     fun clear() {
         logs.setLength(0)
     }

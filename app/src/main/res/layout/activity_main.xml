@@ -19,11 +19,19 @@
             android:textSize="40sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
-            android:layout_marginBottom="64dp"
+            android:layout_marginBottom="16dp"
             android:shadowColor="#000000"
             android:shadowDx="2"
             android:shadowDy="2"
             android:shadowRadius="4"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Powered by Supabase ⚡"
+            android:textSize="14sp"
+            android:textColor="#AAAAAA"
+            android:layout_marginBottom="48dp" />
 
         <Button
             android:id="@+id/btnPhoneMode"
@@ -84,46 +92,14 @@
                 android:textColor="#FFFFFF"/>
         </RadioGroup>
 
-        <EditText
-            android:id="@+id/etServerUrl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="URL Server (ví dụ: http://site.free.nf)"
-            android:layout_marginTop="48dp"
-            android:inputType="textUri"
-            android:background="@drawable/input_background"
-            android:padding="12dp"
-            android:textColor="#000000"
-            android:textColorHint="#757575"/>
-
-        <Button
-            android:id="@+id/btnSaveUrl"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Lưu URL"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF"/>
-
-        <Button
-            android:id="@+id/btnVerify"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🛡️ Xác thực Hosting (Bắt buộc)"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="#FF9800"
-            android:textColor="#FFFFFF"/>
-
         <Button
             android:id="@+id/btnViewLogs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Xem Logs (Báo lỗi)"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="48dp"
             android:backgroundTint="#FF5722"
             android:textColor="#FFFFFF"/>
-
-
 
     </LinearLayout>
 </ScrollView>

@@ -4,9 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.skul9x.locateshare.network.AppLogger
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,37 +16,10 @@ class MainActivity : AppCompatActivity() {
 
         val btnPhoneMode = findViewById<Button>(R.id.btnPhoneMode)
         val btnCarMode = findViewById<Button>(R.id.btnCarMode)
-        val etServerUrl = findViewById<EditText>(R.id.etServerUrl)
-        val btnSaveUrl = findViewById<Button>(R.id.btnSaveUrl)
 
         val prefs = getSharedPreferences("LocateSharePrefs", Context.MODE_PRIVATE)
-        var savedUrl = prefs.getString("server_url", "")
 
-        if (savedUrl.isNullOrEmpty()) {
-            savedUrl = "https://skul9x.free.nf/LocateShare/"
-            prefs.edit().putString("server_url", savedUrl).apply()
-        }
-
-        etServerUrl.setText(savedUrl)
-
-        // Load saved cookie from SharedPreferences
-        com.skul9x.locateshare.network.RetrofitClient.loadCookie(this)
-        
-        // Auto verify only if no saved cookie exists
-        if (com.skul9x.locateshare.network.RetrofitClient.cookie.isEmpty() && !savedUrl.isNullOrEmpty()) {
-            com.skul9x.locateshare.network.HostingVerifier.verify(this, savedUrl) {}
-        }
-
-        btnSaveUrl.setOnClickListener {
-            val url = etServerUrl.text.toString().trim()
-            if (url.isNotEmpty()) {
-                // Ensure trailing slash
-                val finalUrl = if (url.endsWith("/")) url else "$url/"
-                prefs.edit().putString("server_url", finalUrl).apply()
-                Toast.makeText(this, "Đã lưu URL!", Toast.LENGTH_SHORT).show()
-            }
-        }
-
+        // Auto-launch default mode
         val rgDefaultMode = findViewById<android.widget.RadioGroup>(R.id.rgDefaultMode)
         val defaultMode = prefs.getString("default_mode", "none")
 
@@ -79,19 +52,9 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, CarActivity::class.java))
         }
 
-        val btnVerify = findViewById<Button>(R.id.btnVerify)
-        btnVerify.setOnClickListener {
-            val url = etServerUrl.text.toString().trim()
-            if (url.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập URL trước!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            com.skul9x.locateshare.network.HostingVerifier.verify(this, url) {}
-        }
-
         val btnViewLogs = findViewById<Button>(R.id.btnViewLogs)
         btnViewLogs.setOnClickListener {
-            val logs = com.skul9x.locateshare.network.AppLogger.getLogs()
+            val logs = AppLogger.getLogs()
             val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Logs")
                 .setMessage(if (logs.isNotEmpty()) logs else "Chưa có log nào.")
@@ -105,7 +68,5 @@ class MainActivity : AppCompatActivity() {
                 .create()
             dialog.show()
         }
-
-
     }
 }
