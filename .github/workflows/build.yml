@@ -1,0 +1,102 @@
+name: Android CI/CD Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Calculate and Increment Version
+        id: versioning
+        run: |
+          # Fetch all tags from origin
+          git fetch --tags --force
+          
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            NEW_VERSION=${TAG_NAME#v}
+            echo "Triggered by tag push: $TAG_NAME. Version set to $NEW_VERSION."
+          else
+            # Triggered by push to main. Let's find the latest tag to increment.
+            LATEST_TAG=$(git tag -l "v*" | sort -V | tail -n 1)
+            echo "Latest tag found: $LATEST_TAG"
+            if [ -z "$LATEST_TAG" ]; then
+              NEW_VERSION="1.0"
+              echo "No tags found. Defaulting to version 1.0."
+            else
+              VERSION_NUM=${LATEST_TAG#v}
+              # Split version by dot (e.g. 1.0 -> 1 and 0)
+              MAJOR=$(echo $VERSION_NUM | cut -d. -f1)
+              MINOR=$(echo $VERSION_NUM | cut -d. -f2)
+              if [ -z "$MINOR" ]; then MINOR=0; fi
+              
+              # Increment minor version
+              MINOR=$((MINOR + 1))
+              if [ $MINOR -ge 10 ]; then
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+              fi
+              NEW_VERSION="$MAJOR.$MINOR"
+              echo "Incremented version from $VERSION_NUM to $NEW_VERSION."
+            fi
+          fi
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Update Configuration Files
+        run: |
+          echo "Updating configuration files with version ${{ env.VERSION }}"
+          # Update versionName inside app/build.gradle.kts
+          sed -i 's/versionName = "[^"]*"/versionName = "${{ env.VERSION }}"/g' app/build.gradle.kts
+          
+          # Update versionCode inside app/build.gradle.kts to GITHUB_RUN_NUMBER
+          sed -i 's/versionCode = [0-9]*/versionCode = ${{ github.run_number }}/g' app/build.gradle.kts
+          
+          # Replace placeholder {this_year} in README.md with the current year
+          CURRENT_YEAR=$(date +'%Y')
+          sed -i "s/{this_year}/$CURRENT_YEAR/g" README.md
+
+      - name: Build Android Debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Prepare APK Asset
+        run: |
+          # Copy build output APK to release file name format LocateShare-vX.X.apk
+          cp app/build/outputs/apk/debug/app-debug.apk LocateShare-v${{ env.VERSION }}.apk
+          echo "APK prepared: LocateShare-v${{ env.VERSION }}.apk"
+
+      - name: Create or Update GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_TAG="v${{ env.VERSION }}"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists. Uploading asset..."
+            gh release upload "$RELEASE_TAG" LocateShare-v${{ env.VERSION }}.apk --clobber
+          else
+            echo "Creating new release $RELEASE_TAG..."
+            gh release create "$RELEASE_TAG" LocateShare-v${{ env.VERSION }}.apk \
+              --title "Release $RELEASE_TAG" \
+              --notes "Bản build tự động từ GitHub Actions CI/CD cho phiên bản $RELEASE_TAG."
+          fi

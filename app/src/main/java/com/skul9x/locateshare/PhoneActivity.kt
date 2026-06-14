@@ -1,6 +1,7 @@
 package com.skul9x.locateshare
 
 import android.content.Intent
+import com.skul9x.locateshare.util.LocationParser
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -48,12 +49,23 @@ class PhoneActivity : AppCompatActivity() {
 
                 if (extractedUrl != null) {
                     // Show loading
-                    statusText.text = "Đang gửi địa điểm..."
+                    statusText.text = "Đang xử lý địa điểm..."
                     progressBar.visibility = View.VISIBLE
                     btnBack.visibility = View.GONE
 
-                    // Send to Supabase
-                    sendLocationToSupabase(extractedUrl, "")
+                    lifecycleScope.launch {
+                        var extractedName = LocationParser.parseNameFromSharedText(sharedText, extractedUrl)
+                        if (extractedName.isEmpty() && extractedUrl.contains("maps.app.goo.gl")) {
+                            statusText.text = "Đang giải mã URL..."
+                            try {
+                                extractedName = LocationParser.resolveRedirectUrlToName(extractedUrl)
+                            } catch (e: Exception) {
+                                AppLogger.log("Failed to resolve redirect: ${e.message}")
+                            }
+                        }
+                        statusText.text = "Đang gửi địa điểm..."
+                        sendLocationToSupabase(extractedUrl, extractedName)
+                    }
                 } else {
                     showError("Không tìm thấy link Google Maps hợp lệ")
                 }

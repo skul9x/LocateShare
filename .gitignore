@@ -24,3 +24,6 @@ env
 build
 dist
 *.spec
+.brain/
+.kotlin/
+*.apk
