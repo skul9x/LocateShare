@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootCarLayout"
+    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#121212"
@@ -28,9 +30,23 @@
         android:textStyle="bold"
         android:textColor="#FFFFFF"
         android:layout_marginEnd="8dp"
-        app:layout_constraintEnd_toStartOf="@id/btnSettings"
+        app:layout_constraintEnd_toStartOf="@id/btnWifiSettings"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/btnBack"/>
+
+    <!-- Top Right: Wi-Fi Settings Button -->
+    <ImageButton
+        android:id="@+id/btnWifiSettings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_wifi"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:tint="#FFFFFF"
+        android:contentDescription="Wi-Fi Settings"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toStartOf="@id/btnSettings"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack" />
 
     <!-- Top Right: Settings Button -->
     <ImageButton

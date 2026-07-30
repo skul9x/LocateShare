@@ -3,12 +3,16 @@ package com.skul9x.locateshare
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.skul9x.locateshare.network.FavoriteLocation
 import com.skul9x.locateshare.network.RetrofitClient
@@ -33,6 +37,18 @@ class CarActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_car)
 
+        val rootLayout = findViewById<ConstraintLayout>(R.id.rootCarLayout)
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
+            val statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(
+                statusBarInsets.left,
+                statusBarInsets.top,
+                statusBarInsets.right,
+                statusBarInsets.bottom
+            )
+            insets
+        }
+
         tvLocation = findViewById(R.id.tvLocation)
         tvLocationName = findViewById(R.id.tvLocationName)
         btnOpenMap = findViewById(R.id.btnOpenMap)
@@ -40,9 +56,13 @@ class CarActivity : AppCompatActivity() {
         val btnReload = findViewById<Button>(R.id.btnReload)
         val btnFavorites = findViewById<Button>(R.id.btnFavorites)
         val btnSettings = findViewById<ImageButton>(R.id.btnSettings)
+        val btnWifiSettings = findViewById<ImageButton>(R.id.btnWifiSettings)
 
         // Back
         btnBack.setOnClickListener { finish() }
+
+        // Wi-Fi Settings
+        btnWifiSettings.setOnClickListener { openWifiSettings() }
 
         // Settings
         btnSettings.setOnClickListener {
@@ -181,6 +201,15 @@ class CarActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Không thể mở bản đồ", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openWifiSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Không thể mở cài đặt Wi-Fi", Toast.LENGTH_SHORT).show()
         }
     }
 }
