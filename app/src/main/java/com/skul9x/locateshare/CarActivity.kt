@@ -3,7 +3,6 @@ package com.skul9x.locateshare
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
@@ -16,6 +15,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.skul9x.locateshare.network.FavoriteLocation
 import com.skul9x.locateshare.network.RetrofitClient
+import com.skul9x.locateshare.util.NetworkUtils
+import com.skul9x.locateshare.util.SupabaseConnectionGuard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,13 +26,21 @@ import java.util.Locale
 
 class CarActivity : AppCompatActivity() {
 
-    private lateinit var tvLocation: TextView
+    internal lateinit var tvLocation: TextView
     private lateinit var tvLocationName: TextView
     private lateinit var btnOpenMap: Button
 
     private var currentUrl: String = ""
 
     private val api by lazy { RetrofitClient.getApiService() }
+
+    internal val connectionGuard = SupabaseConnectionGuard()
+
+    var hasAutoOpenedWifiOnFailure: Boolean
+        get() = connectionGuard.hasAutoOpenedWifiOnFailure
+        set(value) {
+            connectionGuard.hasAutoOpenedWifiOnFailure = value
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,7 +80,7 @@ class CarActivity : AppCompatActivity() {
 
         // Reload: Fetch current location from Supabase
         btnReload.setOnClickListener {
-            fetchCurrentLocation()
+            fetchCurrentLocation(isManualReload = true)
         }
 
         // Open Map: Mở URL hiện tại trên bản đồ
@@ -95,21 +104,22 @@ class CarActivity : AppCompatActivity() {
         }
 
         // Auto-load current location khi vào
-        fetchCurrentLocation()
+        fetchCurrentLocation(isManualReload = false)
     }
 
     override fun onResume() {
         super.onResume()
         // Refresh khi quay lại từ Settings
-        fetchCurrentLocation()
+        fetchCurrentLocation(isManualReload = false)
     }
 
-    private fun fetchCurrentLocation() {
+    internal fun fetchCurrentLocation(isManualReload: Boolean = false) {
         lifecycleScope.launch {
             try {
                 val locations = withContext(Dispatchers.IO) {
                     api.getCurrentLocation()
                 }
+                connectionGuard.onFetchSuccess()
                 if (locations.isNotEmpty()) {
                     val loc = locations[0]
                     if (loc.url.isNotEmpty()) {
@@ -122,7 +132,12 @@ class CarActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CarActivity, "Lỗi tải: ${e.message}", Toast.LENGTH_SHORT).show()
+                    val action = connectionGuard.handleFetchError(e, isManualReload)
+                    action.locationMessage?.let { tvLocation.text = it }
+                    Toast.makeText(this@CarActivity, action.toastMessage, Toast.LENGTH_SHORT).show()
+                    if (action.shouldOpenWifi) {
+                        openWifiSettings()
+                    }
                 }
             }
         }
@@ -204,12 +219,11 @@ class CarActivity : AppCompatActivity() {
         }
     }
 
-    private fun openWifiSettings() {
-        try {
-            val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
-            startActivity(intent)
-        } catch (e: Exception) {
+    internal fun openWifiSettings(): Boolean {
+        val opened = NetworkUtils.openWifiSettings(this)
+        if (!opened) {
             Toast.makeText(this, "Không thể mở cài đặt Wi-Fi", Toast.LENGTH_SHORT).show()
         }
+        return opened
     }
 }

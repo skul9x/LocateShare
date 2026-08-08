@@ -48,6 +48,7 @@ class SettingsActivity : AppCompatActivity() {
             onDeleteClick = { item -> confirmDelete(item) }
         )
         rvFavorites.layoutManager = LinearLayoutManager(this)
+        rvFavorites.isNestedScrollingEnabled = false
         rvFavorites.adapter = adapter
 
         // Add button
