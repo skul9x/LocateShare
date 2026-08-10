@@ -23,8 +23,12 @@ Hệ thống được thiết kế với kiến trúc đồng bộ thời gian t
 * **Mở bản đồ điều hướng nhanh:** Nút **MỞ BẢN ĐỒ** kích hoạt thẳng ứng dụng Google Maps mặc định trên màn hình xe và bắt đầu chỉ đường.
 * **Tương tác danh sách Yêu thích qua Chạm Đúp (Double-Tap Gesture):**
   * **Chạm đơn (Single Tap):** Mở ngay địa điểm mặc định được gắn sao ⭐ (*Fav of Favs* - như Nhà riêng/Công ty) trên Google Maps.
-  * **Chạm đúp (Double Tap trong 300ms):** Hiển thị danh sách Popup toàn bộ địa điểm ưa thích để lựa chọn điểm đến khác.
+  * **Chạm đúp (Double Tap trong 300ms):** Hiển thị danh sách Popup Card dạng Floating Modal với hiệu ứng làm mờ nền (Background Blur) và làm tối 85% (`dimAmount = 0.85f`), kích thước thẻ cảm ứng lớn (52dp+), tương phản cao tối ưu cho màn hình xe hơi (Automotive Head Unit).
   * *Loại bỏ hoàn toàn thao tác Nhấn giữ (Long-press)* gây mất tập trung và khó thao tác khi đang cầm lái.
+* **Hiệu ứng Làm mờ nền 85% (85% Frosted Background Blur & Dimming):**
+  * Sử dụng `FLAG_BLUR_BEHIND` với bán kính làm mờ `blurBehindRadius = 60` trên Android 12+ (API 31+).
+  * Áp dụng `dimAmount = 0.85f` đồng bộ trên mọi phiên bản Android (từ Android 7.0 / API 24 trở lên).
+  * Modal nổi bo góc mềm mại (`#1E1E1E`), hỗ trợ cuộn mượt mà với thanh cuộn lớn dễ nhìn khi lái xe.
 * **Tự động ẩn Dialog cảnh báo Wi-Fi (Auto-Dismiss Wi-Fi Popup):**
   * Lắng nghe trạng thái kết nối mạng thời gian thực qua `NetworkConnectivityObserver`.
   * Tự động tắt Dialog nhắc nhở Wi-Fi/Internet ngay khi thiết bị có kết nối mạng trở lại mà không cần người dùng thao tác thủ công.
@@ -166,7 +170,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 ## 🧪 Hệ thống Kiểm thử (Verification & Test Suite)
 
-Dự án bao gồm bộ kiểm thử **69 Test cases** bảo đảm tính ổn định tuyệt đối không có regression:
+Dự án bao gồm bộ kiểm thử **86 Test cases** bảo đảm tính ổn định tuyệt đối không có regression:
 
 * **Chạy toàn bộ Test suite (Offline & Layout Tests):**
   ```bash
@@ -175,12 +179,14 @@ Dự án bao gồm bộ kiểm thử **69 Test cases** bảo đảm tính ổn �
 * **Danh sách các bộ kiểm thử chính:**
   * `DoubleTapHandlerTest`: Kiểm thử cử chỉ chạm đơn, chạm đúp, chạm chậm, chạm ba lần và hủy timer.
   * `CarActivityFavoritesInteractionTest`: Kiểm thử tích hợp chạm đúp trên CarActivity.
+  * `CarActivityFloatingCardPopupTest`: Kiểm thử hiển thị floating card popup, hiệu ứng mờ 85% và điều hướng bản đồ.
+  * `FavoriteCardAdapterTest`: Kiểm thử logic adapter thẻ địa điểm ưa thích, dữ liệu item và trigger listener.
   * `CarActivityAutoDismissWifiTest`: Kiểm thử tự động ẩn popup Wi-Fi và quản lý dialog.
   * `CarActivitySupabaseConnectionFailureTest`: Kiểm thử xử lý lỗi kết nối Supabase.
   * `NetworkConnectivityObserverTest`: Kiểm thử phát hiện thay đổi mạng thực tế và fallback.
   * `NetworkUtilsTest`: Kiểm thử helper kiểm tra trạng thái mạng.
   * `LocationParserTest`: Kiểm thử trích xuất tên địa điểm và theo vết redirect link ngắn.
-  * `CarLayoutXmlTest` / `SettingsLandscapeLayoutTest` / `SettingsPortraitLayoutTest`: Kiểm thử giao diện và cấu trúc XML.
+  * `FloatingCardPopupXmlTest` / `CarLayoutXmlTest` / `SettingsLandscapeLayoutTest` / `SettingsPortraitLayoutTest`: Kiểm thử giao diện và cấu trúc XML.
 
 ---
 

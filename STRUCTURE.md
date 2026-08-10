@@ -24,11 +24,12 @@ LocateShare-main/
 │       │   ├── java/com/skul9x/locateshare/
 │       │   │   ├── MainActivity.kt             # Màn hình khởi đầu: Điều hướng chế độ Xe hoặc Điện thoại
 │       │   │   ├── PhoneActivity.kt            # Giao diện Gửi: Nhận Share Intent từ Maps & gửi Supabase
-│       │   │   ├── CarActivity.kt              # Giao diện Xe: Nhận vị trí, Double-tap Favorites, Auto Wi-Fi dismiss
+│       │   │   ├── CarActivity.kt              # Giao diện Xe: Nhận vị trí, Double-tap Floating Card Popup (85% Blur), Auto Wi-Fi dismiss
 │       │   │   ├── SettingsActivity.kt         # Giao diện Cài đặt: Quản lý danh sách Yêu thích (Favorites)
 │       │   │   │
 │       │   │   ├── adapter/
-│       │   │   │   └── FavoriteAdapter.kt      # RecyclerView Adapter hiển thị danh sách địa điểm yêu thích
+│       │   │   │   ├── FavoriteAdapter.kt      # RecyclerView Adapter danh sách địa điểm yêu thích (SettingsActivity)
+│       │   │   │   └── FavoriteCardAdapter.kt  # RecyclerView Adapter thẻ xe hơi ô tô (CarActivity Floating Popup)
 │       │   │   │
 │       │   │   ├── network/
 │       │   │   │   ├── ApiService.kt           # Interface Retrofit định nghĩa REST APIs cho Supabase
@@ -49,21 +50,28 @@ LocateShare-main/
 │       │       │   ├── activity_car.xml        # Layout màn hình ô tô nhận vị trí
 │       │       │   ├── activity_settings.xml   # Layout màn hình cài đặt (Chế độ Portrait)
 │       │       │   ├── dialog_edit_favorite.xml# Layout dialog thêm/sửa địa điểm ưa thích
-│       │       │   └── item_favorite.xml       # Layout phần tử danh sách địa điểm ưa thích
+│       │       │   ├── dialog_favorites_card_popup.xml # Layout floating modal popup danh sách ưa thích (Car Mode)
+│       │       │   ├── item_favorite.xml       # Layout phần tử danh sách địa điểm ưa thích (Settings)
+│       │       │   └── item_favorite_card.xml  # Layout thẻ Card địa điểm ô tô cảm ứng lớn (Car Popup)
 │       │       │
 │       │       ├── layout-land/
 │       │       │   └── activity_settings.xml   # Layout màn hình cài đặt tối ưu cho màn hình Ngang (Landscape)
 │       │       │
-│       │       ├── drawable/                   # Các tài nguyên đồ họa XML (Buttons, Cards, Icons)
-│       │       └── values/                     # Colors, Strings, Themes (Hỗ trợ Dark/Light Theme)
+│       │       ├── drawable/                   # Tài nguyên đồ họa XML (bg_dialog_card_popup, bg_card_favorite, bg_btn_open_map, scrollbar_thumb_car...)
+│       │       └── values/                     # Colors, Strings, Themes (FloatingDialogTheme, Dark/Light Theme)
 │       │
 │       └── test/java/com/skul9x/locateshare/
 │           ├── CarActivityAutoDismissWifiTest.kt      # Test tự động tắt Wi-Fi Dialog khi reconnect
 │           ├── CarActivityFavoritesInteractionTest.kt # Test cử chỉ chạm đúp mở Popup Favorites
+│           ├── CarActivityFloatingCardPopupTest.kt    # Test tích hợp Floating Card Popup & 85% Blur trong CarActivity
 │           ├── CarActivitySupabaseConnectionFailureTest.kt # Test xử lý khi Supabase lỗi kết nối
 │           ├── ExampleUnitTest.kt                     # Sample test
 │           │
+│           ├── adapter/
+│           │   └── FavoriteCardAdapterTest.kt         # Test RecyclerView Adapter thẻ ô tô cho Floating Popup
+│           │
 │           ├── layout/
+│           │   ├── FloatingCardPopupXmlTest.kt        # Test XML layout dialog popup thẻ & item card ô tô
 │           │   ├── SettingsLandscapeLayoutTest.kt     # Test XML layout cài đặt ở chế độ ngang
 │           │   ├── SettingsLayoutStructureTest.kt      # Test cấu trúc View của Settings
 │           │   ├── SettingsPortraitLayoutTest.kt       # Test XML layout cài đặt ở chế độ dọc
@@ -79,7 +87,7 @@ LocateShare-main/
 │               ├── ManifestNetworkPermissionTest.kt   # Test kiểm tra khai báo quyền mạng trong Manifest
 │               ├── NetworkConnectivityObserverTest.kt # Test observer lắng nghe thay đổi mạng
 │               ├── NetworkUtilsTest.kt                # Test các hàm helper kiểm tra mạng
-				└── WifiSettingsIntentTest.kt          # Test khởi tạo Intent mở Cài đặt Wi-Fi
+│               └── WifiSettingsIntentTest.kt          # Test khởi tạo Intent mở Cài đặt Wi-Fi
 ```
 
 ---
@@ -98,7 +106,11 @@ LocateShare-main/
    - Màn hình chính chạy trên màn hình xe Android / Điện thoại phụ.
    - Tích hợp `DoubleTapHandler` trên nút `btnFavorites`:
      - **Chạm đơn (Single Tap):** Gọi `openStarredFavorite()` mở địa điểm mặc định (⭐).
-     - **Chạm đúp (Double Tap):** Gọi `showFavoritesPopup()` mở danh sách ưa thích đầy đủ.
+     - **Chạm đúp (Double Tap):** Gọi `showFavoritesPopup()` mở Floating Card Modal Popup danh sách ưa thích.
+   - **Cơ chế 85% Background Blur & Dimming (`showFavoritesPopup`):**
+     - Áp dụng `window.setDimAmount(0.85f)` làm tối nền 85% trên mọi phiên bản Android (API 24+).
+     - Áp dụng `FLAG_BLUR_BEHIND` và `blurBehindRadius = 60` trên Android 12+ (API 31+) để tạo hiệu ứng mờ nhòe kính mờ phía sau modal.
+     - Khung dialog bo góc nổi dạng thẻ card trên nền tối (`#1E1E1E`).
    - Tích hợp `NetworkConnectivityObserver`: Theo dõi mạng thời gian thực, tự động ẩn Dialog Wi-Fi khi có mạng trở lại và gọi `SupabaseConnectionGuard` để tự động tải dữ liệu mới.
 4. **`SettingsActivity.kt`**:
    - Quản lý danh sách các địa điểm yêu thích (CRUD: Create, Read, Update, Delete).
@@ -106,7 +118,10 @@ LocateShare-main/
    - Tự động thay đổi giao diện theo hướng màn hình (`layout` cho Portrait và `layout-land` cho Landscape).
    - Áp dụng WindowInsets API để bù khoảng trống cho thanh trạng thái hệ thống.
 5. **`FavoriteAdapter.kt`**:
-   - RecyclerView Adapter hiển thị danh sách các mục địa điểm ưa thích với nút chỉnh sửa, xóa và nút đánh dấu sao.
+   - RecyclerView Adapter hiển thị danh sách các mục địa điểm ưa thích trong `SettingsActivity` với nút chỉnh sửa, xóa và nút đánh dấu sao.
+6. **`FavoriteCardAdapter.kt`**:
+   - RecyclerView Adapter tối ưu riêng cho xe hơi (Automotive Card UI) trong Floating Modal Popup của `CarActivity`.
+   - Thiết kế thẻ Material Card nổi, chữ lớn (20sp+ bold), hiển thị huy hiệu ngôi sao ⭐ cho vị trí mặc định, nút hành động mở bản đồ **MỞ BẢN ĐỒ** kích thước 52dp+ dễ chạm khi đang lái xe.
 
 ### B. Tầng Mạng & Cloud (Network Layer)
 1. **`ApiService.kt`**:
@@ -148,7 +163,40 @@ LocateShare-main/
 [Execute: openStarredFavorite()]       [Cancel Timer & Execute: showFavoritesPopup()]
 ```
 
-### B. Luồng Khôi phục Mạng & Tự động Ẩn Dialog trong `CarActivity`
+### B. Luồng Khởi tạo Floating Card Modal Popup & 85% Blur
+
+```
+[CarActivity: Double Tap on btnFavorites]
+               │
+               ▼
+[Instantiate Custom Dialog (R.style.FloatingDialogTheme)]
+               │
+               ▼
+[Configure Window Properties]
+   ├── setBackgroundDrawable(TRANSPARENT)
+   ├── setDimAmount(0.85f)  [85% Screen Dimming]
+   └── API 31+: FLAG_BLUR_BEHIND (blurBehindRadius = 60)
+               │
+               ▼
+[Fetch Favorites from Supabase DB]
+               │
+   ┌───────────┴───────────┐
+   ▼                       ▼
+(Favorites Found)      (Empty List)
+   │                       │
+   ▼                       ▼
+[Bind FavoriteCardAdapter]  [Show Empty State Hint]
+   │                       │
+   └───────────┬───────────┘
+               │
+               ▼
+[User Taps Card / 'MỞ BẢN ĐỒ']
+               │
+               ▼
+[openMap(url) & Dismiss Dialog]
+```
+
+### C. Luồng Khôi phục Mạng & Tự động Ẩn Dialog trong `CarActivity`
 
 ```
   Android OS Network Callback
@@ -178,11 +226,12 @@ LocateShare-main/
 
 ## 🧪 4. Cấu trúc Bộ Kiểm thử (Test Suite Matrix)
 
-Hệ thống kiểm thử được chia làm 3 nhóm chính:
+Hệ thống kiểm thử bao gồm **86 Test Cases** được chia làm 4 nhóm chính:
 
 | Nhóm Kiểm thử | Class Kiểm thử | Mục đích & Chi tiết |
 | :--- | :--- | :--- |
 | **Gesture & Logic** | `DoubleTapHandlerTest` | Kiểm tra tính chính xác của cử chỉ chạm đơn, chạm đúp, chạm quá 300ms, chạm 3 lần và hủy timer. |
+| **Floating Popup & Automotive UI** | `CarActivityFloatingCardPopupTest` <br/> `FavoriteCardAdapterTest` <br/> `FloatingCardPopupXmlTest` | Kiểm tra hiển thị floating modal popup, thuộc tính mờ/tối 85%, adapter thẻ ô tô, binding dữ liệu, hành vi mở bản đồ và cấu trúc giao diện XML. |
 | **Network & Guard** | `NetworkConnectivityObserverTest` <br/> `NetworkUtilsTest` <br/> `CarActivityAutoDismissWifiTest` <br/> `CarActivitySupabaseConnectionFailureTest` | Kiểm tra lắng nghe trạng thái mạng, tự động tắt popup Wi-Fi khi có lại mạng, và xử lý khi mất kết nối tới Supabase. |
 | **Parser & Integration** | `LocationParserTest` <br/> `SupabaseIntegrationTest` | Kiểm tra giải mã tên địa điểm tiếng Việt có dấu, resolve link ngắn, và gọi API thực tế tới Supabase. |
 | **Layout & System Insets** | `CarLayoutXmlTest` <br/> `SettingsPortraitLayoutTest` <br/> `SettingsLandscapeLayoutTest` <br/> `SettingsStatusbarInsetsTest` | Kiểm tra giao diện XML thích ứng đúng với hướng màn hình (Portrait/Landscape) và thanh trạng thái (StatusBar). |

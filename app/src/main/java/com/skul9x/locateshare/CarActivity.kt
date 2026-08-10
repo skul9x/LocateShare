@@ -1,18 +1,27 @@
 package com.skul9x.locateshare
 
+import android.app.Dialog
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.skul9x.locateshare.adapter.FavoriteCardAdapter
+import com.skul9x.locateshare.network.ApiService
 import com.skul9x.locateshare.network.FavoriteLocation
 import com.skul9x.locateshare.network.RetrofitClient
 import com.skul9x.locateshare.util.DoubleTapHandler
@@ -35,11 +44,21 @@ open class CarActivity : AppCompatActivity() {
 
     private var currentUrl: String = ""
 
-    private val api by lazy { RetrofitClient.getApiService() }
+    private var _api: ApiService? = null
+    internal var api: ApiService
+        get() = _api ?: RetrofitClient.getApiService().also { _api = it }
+        set(value) {
+            _api = value
+        }
 
     internal val connectionGuard = SupabaseConnectionGuard()
     internal var networkObserver: INetworkConnectivityObserver = NetworkConnectivityObserver(this)
     internal var favoritesDoubleTapHandler: DoubleTapHandler? = null
+    internal var currentFavoritesDialog: Dialog? = null
+    internal var ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO
+    internal var coroutineScope: kotlinx.coroutines.CoroutineScope? = null
+    private val scope: kotlinx.coroutines.CoroutineScope
+        get() = coroutineScope ?: lifecycleScope
 
     var hasAutoOpenedWifiOnFailure: Boolean
         get() = connectionGuard.hasAutoOpenedWifiOnFailure
@@ -140,12 +159,14 @@ open class CarActivity : AppCompatActivity() {
     internal fun handleDestroy() {
         networkObserver.stopListening()
         favoritesDoubleTapHandler?.cancelPending()
+        currentFavoritesDialog?.dismiss()
+        currentFavoritesDialog = null
     }
 
     open fun fetchCurrentLocation(isManualReload: Boolean = false) {
-        lifecycleScope.launch {
+        scope.launch {
             try {
-                val locations = withContext(Dispatchers.IO) {
+                val locations = withContext(ioDispatcher) {
                     api.getCurrentLocation()
                 }
                 connectionGuard.onFetchSuccess()
@@ -163,7 +184,9 @@ open class CarActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     val action = connectionGuard.handleFetchError(e, isManualReload)
                     action.locationMessage?.let { tvLocation.text = it }
-                    Toast.makeText(this@CarActivity, action.toastMessage, Toast.LENGTH_SHORT).show()
+                    try {
+                        Toast.makeText(this@CarActivity, action.toastMessage, Toast.LENGTH_SHORT)?.show()
+                    } catch (_: Throwable) {}
                     if (action.shouldOpenWifi) {
                         openWifiSettings()
                     }
@@ -183,56 +206,106 @@ open class CarActivity : AppCompatActivity() {
     }
 
     internal open fun openStarredFavorite() {
-        lifecycleScope.launch {
+        scope.launch {
             try {
-                val starred = withContext(Dispatchers.IO) {
+                val starred = withContext(ioDispatcher) {
                     api.getStarredFavorite()
                 }
                 if (starred.isNotEmpty()) {
                     openMap(starred[0].url)
                 } else {
-                    Toast.makeText(this@CarActivity, EMPTY_STARRED_TOAST, Toast.LENGTH_LONG).show()
+                    try {
+                        Toast.makeText(this@CarActivity, EMPTY_STARRED_TOAST, Toast.LENGTH_LONG)?.show()
+                    } catch (_: Throwable) {}
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+                try {
+                    Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT)?.show()
+                } catch (_: Throwable) {}
             }
         }
     }
 
     internal open fun showFavoritesPopup() {
-        lifecycleScope.launch {
+        scope.launch {
             try {
-                val favorites = withContext(Dispatchers.IO) {
+                val favorites = withContext(ioDispatcher) {
                     api.getFavorites()
                 }
 
                 if (favorites.isEmpty()) {
-                    Toast.makeText(this@CarActivity, "Chưa có địa điểm ưa thích!\nVào ⚙️ Settings để thêm", Toast.LENGTH_LONG).show()
+                    try {
+                        Toast.makeText(this@CarActivity, "Chưa có địa điểm ưa thích!\nVào ⚙️ Settings để thêm", Toast.LENGTH_LONG)?.show()
+                    } catch (_: Throwable) {}
                     return@launch
                 }
 
-                // Build display names with star indicator
-                val displayNames = favorites.map { fav ->
-                    val star = if (fav.isStarred) "⭐ " else "    "
-                    "$star${fav.name}"
-                }.toTypedArray()
-
-                AlertDialog.Builder(this@CarActivity, android.R.style.Theme_DeviceDefault_Dialog)
-                    .setTitle("📍 Chọn địa điểm ưa thích")
-                    .setItems(displayNames) { _, which ->
-                        val selected = favorites[which]
-                        openMap(selected.url)
-                    }
-                    .setNegativeButton("Đóng", null)
-                    .show()
-
+                val dialog = createFavoritesDialog(favorites)
+                currentFavoritesDialog = dialog
+                dialog.show()
             } catch (e: Exception) {
-                Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+                try {
+                    Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT)?.show()
+                } catch (_: Throwable) {}
             }
         }
     }
 
-    private fun openMap(url: String) {
+    internal fun configureDialogWindow(
+        window: android.view.Window?,
+        density: Float = resources?.displayMetrics?.density ?: 1f,
+        widthPixels: Int = resources?.displayMetrics?.widthPixels ?: 800,
+        sdkInt: Int = Build.VERSION.SDK_INT
+    ) {
+        window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setDimAmount(POPUP_DIM_AMOUNT)
+            if (sdkInt >= Build.VERSION_CODES.S) {
+                addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                attributes = attributes.apply { blurBehindRadius = POPUP_BLUR_BEHIND_RADIUS }
+            }
+            val calculatedWidth = calculatePopupWidth(widthPixels, density)
+            setLayout(
+                calculatedWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+    }
+
+    internal open fun createFavoritesDialog(favorites: List<FavoriteLocation>): Dialog {
+        val dialog = Dialog(this, R.style.Theme_LocateShare_FloatingDialog)
+        dialog.setContentView(R.layout.dialog_favorites_card_popup)
+
+        configureDialogWindow(dialog.window)
+
+        val rvFavoritesPopup = dialog.findViewById<RecyclerView>(R.id.rvFavoritesPopup)
+        val btnClosePopup = dialog.findViewById<ImageButton>(R.id.btnClosePopup)
+
+        val adapter = FavoriteCardAdapter(
+            items = favorites.toMutableList(),
+            onItemClick = { fav ->
+                dialog.dismiss()
+                openMap(fav.url)
+            },
+            onOpenMapClick = { fav ->
+                dialog.dismiss()
+                openMap(fav.url)
+            }
+        )
+
+        rvFavoritesPopup?.apply {
+            layoutManager = LinearLayoutManager(this@CarActivity)
+            this.adapter = adapter
+        }
+
+        btnClosePopup?.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        return dialog
+    }
+
+    internal open fun openMap(url: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             intent.setPackage("com.google.android.apps.maps")
@@ -283,5 +356,13 @@ open class CarActivity : AppCompatActivity() {
     companion object {
         const val BRING_TO_FRONT_FLAGS = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         const val EMPTY_STARRED_TOAST = "Chưa có địa điểm mặc định ⭐\nChạm đúp để chọn từ danh sách"
+        const val POPUP_DIM_AMOUNT = 0.85f
+        const val POPUP_BLUR_BEHIND_RADIUS = 60
+        const val POPUP_MAX_WIDTH_DP = 640
+
+        fun calculatePopupWidth(widthPixels: Int, density: Float): Int {
+            val maxWidthPx = (POPUP_MAX_WIDTH_DP * density).toInt()
+            return (widthPixels * 0.85).toInt().coerceAtMost(maxWidthPx)
+        }
     }
 }
