@@ -15,6 +15,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.skul9x.locateshare.network.FavoriteLocation
 import com.skul9x.locateshare.network.RetrofitClient
+import com.skul9x.locateshare.util.DoubleTapHandler
+import com.skul9x.locateshare.util.INetworkConnectivityObserver
+import com.skul9x.locateshare.util.NetworkConnectivityObserver
 import com.skul9x.locateshare.util.NetworkUtils
 import com.skul9x.locateshare.util.SupabaseConnectionGuard
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class CarActivity : AppCompatActivity() {
+open class CarActivity : AppCompatActivity() {
 
     internal lateinit var tvLocation: TextView
     private lateinit var tvLocationName: TextView
@@ -35,6 +38,8 @@ class CarActivity : AppCompatActivity() {
     private val api by lazy { RetrofitClient.getApiService() }
 
     internal val connectionGuard = SupabaseConnectionGuard()
+    internal var networkObserver: INetworkConnectivityObserver = NetworkConnectivityObserver(this)
+    internal var favoritesDoubleTapHandler: DoubleTapHandler? = null
 
     var hasAutoOpenedWifiOnFailure: Boolean
         get() = connectionGuard.hasAutoOpenedWifiOnFailure
@@ -92,28 +97,52 @@ class CarActivity : AppCompatActivity() {
             }
         }
 
-        // Favorites - Click ngắn: Mở địa điểm đã đánh sao ⭐
-        btnFavorites.setOnClickListener {
-            openStarredFavorite()
-        }
-
-        // Favorites - Long press: Hiện popup danh sách tất cả
-        btnFavorites.setOnLongClickListener {
-            showFavoritesPopup()
-            true
-        }
+        // Favorites: Double-Tap Handler (Single tap -> Starred, Double tap -> Popup)
+        val tapHandler = favoritesDoubleTapHandler ?: initFavoritesDoubleTapHandler()
+        btnFavorites.setOnClickListener(tapHandler)
 
         // Auto-load current location khi vào
         fetchCurrentLocation(isManualReload = false)
     }
 
-    override fun onResume() {
-        super.onResume()
-        // Refresh khi quay lại từ Settings
-        fetchCurrentLocation(isManualReload = false)
+    internal fun initFavoritesDoubleTapHandler(
+        scheduler: DoubleTapHandler.Scheduler = DoubleTapHandler.DefaultScheduler(),
+        timeProvider: () -> Long = { System.currentTimeMillis() }
+    ): DoubleTapHandler {
+        val handler = DoubleTapHandler(
+            timeoutMs = DoubleTapHandler.DEFAULT_TIMEOUT_MS,
+            timeProvider = timeProvider,
+            scheduler = scheduler,
+            onSingleTap = { openStarredFavorite() },
+            onDoubleTap = { showFavoritesPopup() }
+        )
+        favoritesDoubleTapHandler = handler
+        return handler
     }
 
-    internal fun fetchCurrentLocation(isManualReload: Boolean = false) {
+    override fun onResume() {
+        super.onResume()
+        handleResume()
+    }
+
+    internal fun handleResume() {
+        // Refresh khi quay lại từ Settings (throttled to avoid redundant fetch after auto-dismiss)
+        if (!connectionGuard.shouldThrottleFetch(System.currentTimeMillis())) {
+            fetchCurrentLocation(isManualReload = false)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handleDestroy()
+    }
+
+    internal fun handleDestroy() {
+        networkObserver.stopListening()
+        favoritesDoubleTapHandler?.cancelPending()
+    }
+
+    open fun fetchCurrentLocation(isManualReload: Boolean = false) {
         lifecycleScope.launch {
             try {
                 val locations = withContext(Dispatchers.IO) {
@@ -153,7 +182,7 @@ class CarActivity : AppCompatActivity() {
         }
     }
 
-    private fun openStarredFavorite() {
+    internal open fun openStarredFavorite() {
         lifecycleScope.launch {
             try {
                 val starred = withContext(Dispatchers.IO) {
@@ -162,7 +191,7 @@ class CarActivity : AppCompatActivity() {
                 if (starred.isNotEmpty()) {
                     openMap(starred[0].url)
                 } else {
-                    Toast.makeText(this@CarActivity, "Chưa có địa điểm mặc định ⭐\nẤn giữ để chọn từ danh sách", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@CarActivity, EMPTY_STARRED_TOAST, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@CarActivity, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -170,7 +199,7 @@ class CarActivity : AppCompatActivity() {
         }
     }
 
-    private fun showFavoritesPopup() {
+    internal open fun showFavoritesPopup() {
         lifecycleScope.launch {
             try {
                 val favorites = withContext(Dispatchers.IO) {
@@ -221,9 +250,38 @@ class CarActivity : AppCompatActivity() {
 
     internal fun openWifiSettings(): Boolean {
         val opened = NetworkUtils.openWifiSettings(this)
-        if (!opened) {
-            Toast.makeText(this, "Không thể mở cài đặt Wi-Fi", Toast.LENGTH_SHORT).show()
+        if (opened) {
+            networkObserver.startListening { onInternetRestored() }
+        } else {
+            try {
+                Toast.makeText(this, "Không thể mở cài đặt Wi-Fi", Toast.LENGTH_SHORT)?.show()
+            } catch (_: Throwable) {}
         }
         return opened
+    }
+
+    internal fun createBringToFrontIntent(): Intent {
+        return Intent(this, CarActivity::class.java).apply {
+            flags = BRING_TO_FRONT_FLAGS
+        }
+    }
+
+    internal fun onInternetRestored() {
+        fetchCurrentLocation(isManualReload = false)
+        try {
+            val bringToFrontIntent = createBringToFrontIntent()
+            startActivity(bringToFrontIntent)
+        } catch (e: Exception) {
+            // Safe fallback for custom ROMs
+        }
+        try {
+            Toast.makeText(this, "Đã kết nối Internet! Đang cập nhật vị trí...", Toast.LENGTH_SHORT)?.show()
+        } catch (_: Throwable) {}
+        networkObserver.stopListening()
+    }
+
+    companion object {
+        const val BRING_TO_FRONT_FLAGS = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        const val EMPTY_STARRED_TOAST = "Chưa có địa điểm mặc định ⭐\nChạm đúp để chọn từ danh sách"
     }
 }

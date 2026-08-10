@@ -1,58 +1,194 @@
-# 📁 Project Structure
+# 📁 LocateShare Project Structure & Component Architecture
+
+Tài liệu này mô tả chi tiết toàn bộ cấu trúc mã nguồn, thành phần hệ thống, mối liên kết giữa các class, tài nguyên UI, và bộ kiểm thử (Test Suite) của dự án **LocateShare**.
+
+---
+
+## 🏗️ 1. Cấu trúc Cây Thư mục Dự án (Project File Tree)
 
 ```
 LocateShare-main/
-├── backend/
-│   ├── index.php             # Xử lý lưu/đọc địa điểm (API)
-│   └── location.txt          # File lưu trữ dữ liệu tạm thời
+├── README.md                                   # Tài liệu giới thiệu & Hướng dẫn sử dụng chính
+├── STRUCTURE.md                                # Tài liệu chi tiết kiến trúc & cấu trúc mã nguồn
+├── build.gradle.kts                            # Gradle configuration cấp Root
+├── settings.gradle.kts                         # Cấu hình Module Gradle
 │
 ├── app/
-│   ├── src/main/
-│       ├── AndroidManifest.xml
-│       └── java/com/skul9x/locateshare/
+│   ├── build.gradle.kts                        # Cấu hình dependencies, SDK version (Min: 24, Target/Compile: 35)
+│   ├── proguard-rules.pro                      # Quy tắc tối ưu và bảo vệ code khi release
+│   │
+│   └── src/
+│       ├── main/
+│       │   ├── AndroidManifest.xml             # Khai báo Permissions, Activities, Intent Filters
+│       │   │
+│       │   ├── java/com/skul9x/locateshare/
+│       │   │   ├── MainActivity.kt             # Màn hình khởi đầu: Điều hướng chế độ Xe hoặc Điện thoại
+│       │   │   ├── PhoneActivity.kt            # Giao diện Gửi: Nhận Share Intent từ Maps & gửi Supabase
+│       │   │   ├── CarActivity.kt              # Giao diện Xe: Nhận vị trí, Double-tap Favorites, Auto Wi-Fi dismiss
+│       │   │   ├── SettingsActivity.kt         # Giao diện Cài đặt: Quản lý danh sách Yêu thích (Favorites)
+│       │   │   │
+│       │   │   ├── adapter/
+│       │   │   │   └── FavoriteAdapter.kt      # RecyclerView Adapter hiển thị danh sách địa điểm yêu thích
+│       │   │   │
+│       │   │   ├── network/
+│       │   │   │   ├── ApiService.kt           # Interface Retrofit định nghĩa REST APIs cho Supabase
+│       │   │   │   └── SupabaseConfig.kt       # Khai báo thông số BASE_URL và ANON_KEY
+│       │   │   │
+│       │   │   └── util/
+│       │   │       ├── DoubleTapHandler.kt     # Handler xử lý phân biệt Chạm đơn (Single) & Chạm đúp (Double)
+│       │   │       ├── LocationParser.kt       # Parser trích xuất tên địa điểm & Resolve short links
+│       │   │       ├── NetworkUtils.kt         # Utility kiểm tra kết nối Internet (Active Network Capabilities)
+│       │   │       ├── INetworkConnectivityObserver.kt # Interface theo dõi sự thay đổi trạng thái mạng
+│       │   │       ├── NetworkConnectivityObserver.kt   # Implementation theo dõi mạng qua NetworkCallback
+│       │   │       └── SupabaseConnectionGuard.kt       # Guard quản lý Cooldown & phòng ngừa spam request
+│       │   │
+│       │   └── res/
+│       │       ├── layout/
+│       │       │   ├── activity_main.xml       # Layout màn hình chọn chế độ
+│       │       │   ├── activity_phone.xml      # Layout màn hình gửi địa điểm
+│       │       │   ├── activity_car.xml        # Layout màn hình ô tô nhận vị trí
+│       │       │   ├── activity_settings.xml   # Layout màn hình cài đặt (Chế độ Portrait)
+│       │       │   ├── dialog_edit_favorite.xml# Layout dialog thêm/sửa địa điểm ưa thích
+│       │       │   └── item_favorite.xml       # Layout phần tử danh sách địa điểm ưa thích
+│       │       │
+│       │       ├── layout-land/
+│       │       │   └── activity_settings.xml   # Layout màn hình cài đặt tối ưu cho màn hình Ngang (Landscape)
+│       │       │
+│       │       ├── drawable/                   # Các tài nguyên đồ họa XML (Buttons, Cards, Icons)
+│       │       └── values/                     # Colors, Strings, Themes (Hỗ trợ Dark/Light Theme)
+│       │
+│       └── test/java/com/skul9x/locateshare/
+│           ├── CarActivityAutoDismissWifiTest.kt      # Test tự động tắt Wi-Fi Dialog khi reconnect
+│           ├── CarActivityFavoritesInteractionTest.kt # Test cử chỉ chạm đúp mở Popup Favorites
+│           ├── CarActivitySupabaseConnectionFailureTest.kt # Test xử lý khi Supabase lỗi kết nối
+│           ├── ExampleUnitTest.kt                     # Sample test
 │           │
-│           ├── MainActivity.kt       # Màn hình chính & Cấu hình
-│           ├── PhoneActivity.kt      # Chế độ Gửi (Phone)
-│           ├── CarActivity.kt        # Chế độ Nhận (Car)
+│           ├── layout/
+│           │   ├── SettingsLandscapeLayoutTest.kt     # Test XML layout cài đặt ở chế độ ngang
+│           │   ├── SettingsLayoutStructureTest.kt      # Test cấu trúc View của Settings
+│           │   ├── SettingsPortraitLayoutTest.kt       # Test XML layout cài đặt ở chế độ dọc
+│           │   └── SettingsStatusbarInsetsTest.kt     # Test bù trừ thanh trạng thái (StatusBar Insets)
 │           │
-│           └── network/
-│               ├── ApiService.kt     # Retrofit Interface & Client
-│               └── HostingVerifier.kt # Xử lý xác thực Host (WebView)
-│
-├── build.gradle.kts          # App dependencies
-└── settings.gradle.kts
+│           ├── network/
+│           │   └── SupabaseIntegrationTest.kt         # Test kết nối trực tiếp đến Supabase API
+│           │
+│           └── util/
+│               ├── CarLayoutXmlTest.kt                # Test kiểm tra thuộc tính XML của activity_car.xml
+│               ├── DoubleTapHandlerTest.kt            # Unit test thuật toán phân tách Single/Double tap
+│               ├── LocationParserTest.kt              # Unit test bộ tách tên địa điểm & Redirect resolver
+│               ├── ManifestNetworkPermissionTest.kt   # Test kiểm tra khai báo quyền mạng trong Manifest
+│               ├── NetworkConnectivityObserverTest.kt # Test observer lắng nghe thay đổi mạng
+│               ├── NetworkUtilsTest.kt                # Test các hàm helper kiểm tra mạng
+				└── WifiSettingsIntentTest.kt          # Test khởi tạo Intent mở Cài đặt Wi-Fi
 ```
 
-## 🔄 Data Flow
+---
 
-```mermaid
-sequenceDiagram
-    participant Phone as Phone App
-    participant Server as PHP Backend
-    participant Car as Car App
+## 🧩 2. Mô tả Chi tiết Các Class Cốt Lõi (Core Components Catalog)
 
-    Note over Phone: User shares from Maps
-    Phone->>Server: POST /index.php (url, name)
-    Server->>Server: Save to location.txt
-    
-    Note over Car: User opens Car Mode
-    Car->>Server: GET /index.php
-    Server-->>Car: JSON {url, name}
-    Car->>Car: Open Google Maps
+### A. Tầng Giao diện (Activities & UI Layer)
+1. **`MainActivity.kt`**:
+   - Màn hình trung tâm giúp người dùng lựa chọn chuyển qua **Chế độ Xe Hơi (`CarActivity`)** hoặc **Chế độ Điện Thoại (`PhoneActivity`)**.
+   - Lưu trữ lựa chọn mặc định vào `SharedPreferences` để tự động mở đúng màn hình ở các lần khởi chạy sau.
+2. **`PhoneActivity.kt`**:
+   - Nhận dữ liệu được chia sẻ từ Google Maps qua `Intent.ACTION_SEND` (Text/Plain).
+   - Sử dụng `LocationParser` để làm sạch tên địa điểm và giải mã link rút gọn (`maps.app.goo.gl`) thông qua các `HEAD` request bất đồng bộ.
+   - Gửi payload `{url, name}` lên bảng `current_location` (ID = 1) trên Supabase REST API.
+3. **`CarActivity.kt`**:
+   - Màn hình chính chạy trên màn hình xe Android / Điện thoại phụ.
+   - Tích hợp `DoubleTapHandler` trên nút `btnFavorites`:
+     - **Chạm đơn (Single Tap):** Gọi `openStarredFavorite()` mở địa điểm mặc định (⭐).
+     - **Chạm đúp (Double Tap):** Gọi `showFavoritesPopup()` mở danh sách ưa thích đầy đủ.
+   - Tích hợp `NetworkConnectivityObserver`: Theo dõi mạng thời gian thực, tự động ẩn Dialog Wi-Fi khi có mạng trở lại và gọi `SupabaseConnectionGuard` để tự động tải dữ liệu mới.
+4. **`SettingsActivity.kt`**:
+   - Quản lý danh sách các địa điểm yêu thích (CRUD: Create, Read, Update, Delete).
+   - Hỗ trợ đánh dấu vị trí mặc định ⭐ (`is_starred = true`).
+   - Tự động thay đổi giao diện theo hướng màn hình (`layout` cho Portrait và `layout-land` cho Landscape).
+   - Áp dụng WindowInsets API để bù khoảng trống cho thanh trạng thái hệ thống.
+5. **`FavoriteAdapter.kt`**:
+   - RecyclerView Adapter hiển thị danh sách các mục địa điểm ưa thích với nút chỉnh sửa, xóa và nút đánh dấu sao.
+
+### B. Tầng Mạng & Cloud (Network Layer)
+1. **`ApiService.kt`**:
+   - Định nghĩa các endpoint RESTful kết nối tới Supabase:
+     - `getCurrentLocation()`: Truy vấn vị trí hiện tại (`GET /rest/v1/current_location?id=eq.1`).
+     - `updateCurrentLocation()`: Cập nhật vị trí hiện tại (`PATCH /rest/v1/current_location?id=eq.1`).
+     - `getFavoriteLocations()`: Lấy danh sách địa điểm ưa thích (`GET /rest/v1/favorite_locations`).
+     - `addFavoriteLocation()` / `deleteFavoriteLocation()` / `updateFavoriteLocation()`: Quản lý danh sách ưa thích.
+2. **`SupabaseConfig.kt`**:
+   - Chứa hằng số cấu hình `BASE_URL` và `ANON_KEY`.
+
+### C. Tầng Tiện ích & Xử lý Logic (Utilities & Logic Layer)
+1. **`DoubleTapHandler.kt`**:
+   - Xử lý cử chỉ chạm đúp độc lập với giao diện Android Views (có thể Unit Test 100% bằng JVM).
+   - Sử dụng cơ chế Hẹn giờ (Scheduler/Timer): Nếu có lượt chạm thứ 2 trong khoảng thời gian `DEFAULT_DOUBLE_TAP_TIMEOUT_MS` (300ms), lượt chạm 1 sẽ bị hủy và sự kiện Double Tap được kích hoạt.
+2. **`LocationParser.kt`**:
+   - Phân tích và làm sạch nội dung chia sẻ từ Google Maps.
+   - Theo vết chuyển hướng HTTP (Short link redirect resolution) bằng request `HEAD`.
+3. **`NetworkConnectivityObserver.kt` & `INetworkConnectivityObserver.kt`**:
+   - Đăng ký `ConnectivityManager.NetworkCallback` để nhận sự kiện mạng `ON_AVAILABLE`, `ON_LOST`, `ON_UNAVAILABLE` thời gian thực mà không cần dùng BroadcastReceiver cũ.
+4. **`SupabaseConnectionGuard.kt`**:
+   - Bảo vệ hệ thống khỏi việc gọi API dồn dập khi mạng chập chờn bật/tắt liên tục.
+   - Áp dụng cơ chế Cooldown (mặc định 30 giây).
+
+---
+
+## 🔄 3. Cơ chế & Sơ đồ Tương tác Thành phần (Sequence & State Diagrams)
+
+### A. Máy Trạng thái Xử lý Cử chỉ Chạm Đúp (`DoubleTapHandler`)
+
+```
+   [User Tap 1] --------> (State: Single Tap Pending)
+                               |
+            +------------------+------------------+
+            |                                     |
+    (300ms Timeout)                      [User Tap 2 (<300ms)]
+            |                                     |
+            v                                     v
+[Execute: openStarredFavorite()]       [Cancel Timer & Execute: showFavoritesPopup()]
 ```
 
-## 🔐 Authentication Flow (Free Hosting)
+### B. Luồng Khôi phục Mạng & Tự động Ẩn Dialog trong `CarActivity`
 
-1. **Check Cookie:** App kiểm tra xem đã có cookie `__test` trong SharedPreferences chưa.
-2. **Missing/Expired:** Nếu chưa có hoặc request lỗi 403/JavaScript Challenge:
-   - `HostingVerifier` mở WebView ẩn (hoặc dialog).
-   - Load trang web để chạy JS của nhà mạng.
-   - Lấy cookie `__test` thành công.
-3. **Save:** Lưu cookie vào `SharedPreferences` thông qua `RetrofitClient.saveCookie()`.
-4. **Request:** Đính kèm cookie vào header của mọi request Retrofit.
+```
+  Android OS Network Callback
+               |
+               v
+  NetworkConnectivityObserver.onAvailable()
+               |
+               v
+     CarActivity.onNetworkRestored()
+               |
+   +-----------+-----------+
+   |                       |
+   v                       v
+[Dismiss Wi-Fi Dialog]   [SupabaseConnectionGuard.fetchLocationIfAllowed()]
+                           |
+                     (Passed 30s Cooldown?)
+                           |
+                +----------+----------+
+                |                     |
+              (Yes)                  (No)
+                |                     |
+                v                     v
+      [Call Supabase API]     [Skip Request (Protect Bandwidth)]
+```
 
-## 🧩 Key Components
+---
 
-- **RetrofitClient:** Quản lý kết nối HTTP, tự động thêm Header `Cookie` và `User-Agent`.
-- **HostingVerifier:** Class tiện ích giúp bypass màn hình bảo vệ của các hosting miễn phí like `free.nf`.
-- **PhoneActivity:** Xử lý `ACTION_SEND` intent để nhận text từ ứng dụng khác (Google Maps).
+## 🧪 4. Cấu trúc Bộ Kiểm thử (Test Suite Matrix)
+
+Hệ thống kiểm thử được chia làm 3 nhóm chính:
+
+| Nhóm Kiểm thử | Class Kiểm thử | Mục đích & Chi tiết |
+| :--- | :--- | :--- |
+| **Gesture & Logic** | `DoubleTapHandlerTest` | Kiểm tra tính chính xác của cử chỉ chạm đơn, chạm đúp, chạm quá 300ms, chạm 3 lần và hủy timer. |
+| **Network & Guard** | `NetworkConnectivityObserverTest` <br/> `NetworkUtilsTest` <br/> `CarActivityAutoDismissWifiTest` <br/> `CarActivitySupabaseConnectionFailureTest` | Kiểm tra lắng nghe trạng thái mạng, tự động tắt popup Wi-Fi khi có lại mạng, và xử lý khi mất kết nối tới Supabase. |
+| **Parser & Integration** | `LocationParserTest` <br/> `SupabaseIntegrationTest` | Kiểm tra giải mã tên địa điểm tiếng Việt có dấu, resolve link ngắn, và gọi API thực tế tới Supabase. |
+| **Layout & System Insets** | `CarLayoutXmlTest` <br/> `SettingsPortraitLayoutTest` <br/> `SettingsLandscapeLayoutTest` <br/> `SettingsStatusbarInsetsTest` | Kiểm tra giao diện XML thích ứng đúng với hướng màn hình (Portrait/Landscape) và thanh trạng thái (StatusBar). |
+
+---
+
+## 📄 Bản quyền (License)
+
+Copyright © 2026 Nguyễn Duy Trường (skul9x).

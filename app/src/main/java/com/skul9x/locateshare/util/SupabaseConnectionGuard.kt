@@ -5,7 +5,8 @@ package com.skul9x.locateshare.util
  * Prevents infinite activity-switching loops when returning to the app without internet.
  */
 class SupabaseConnectionGuard(
-    var hasAutoOpenedWifiOnFailure: Boolean = false
+    var hasAutoOpenedWifiOnFailure: Boolean = false,
+    var lastSuccessfulFetchTime: Long = 0L
 ) {
     data class FailureAction(
         val shouldOpenWifi: Boolean,
@@ -15,9 +16,23 @@ class SupabaseConnectionGuard(
 
     /**
      * Resets the failure guard when a Supabase API call succeeds.
+     * Records the fetch timestamp for debounce/throttling.
      */
-    fun onFetchSuccess() {
+    fun onFetchSuccess(timestamp: Long = System.currentTimeMillis()) {
         hasAutoOpenedWifiOnFailure = false
+        lastSuccessfulFetchTime = timestamp
+    }
+
+    /**
+     * Determines whether a fetch request should be throttled to prevent redundant calls.
+     *
+     * @param currentTime The current timestamp in milliseconds
+     * @param thresholdMs The minimum interval between allowed fetches (default 5000ms)
+     * @return True if currentTime - lastSuccessfulFetchTime < thresholdMs, false otherwise
+     */
+    fun shouldThrottleFetch(currentTime: Long, thresholdMs: Long = 5000L): Boolean {
+        if (lastSuccessfulFetchTime <= 0L) return false
+        return (currentTime - lastSuccessfulFetchTime) < thresholdMs
     }
 
     /**

@@ -84,18 +84,37 @@ class CarActivitySupabaseConnectionFailureTest {
     }
 
     @Test
-    fun testSuccessfulFetchResetsGuardFlag() {
+    fun testSuccessfulFetchResetsGuardFlagAndRecordsTimestamp() {
         guard.hasAutoOpenedWifiOnFailure = true
+        val timestamp = 987654321L
 
-        guard.onFetchSuccess()
+        guard.onFetchSuccess(timestamp = timestamp)
 
         assertFalse("Guard flag must be reset to false on successful Supabase fetch", guard.hasAutoOpenedWifiOnFailure)
+        assertEquals("Timestamp must be recorded on successful fetch", timestamp, guard.lastSuccessfulFetchTime)
 
         // Next failure after success should trigger auto-open again
         val subsequentException = UnknownHostException("DNS failure")
         val action = guard.handleFetchError(subsequentException, isManualReload = false)
         assertTrue("After reset, the next network failure should trigger Wi-Fi auto-open", action.shouldOpenWifi)
         assertTrue(guard.hasAutoOpenedWifiOnFailure)
+    }
+
+    @Test
+    fun testShouldThrottleFetchCalculations() {
+        // Initial state with 0L timestamp
+        assertFalse("Should not throttle when lastSuccessfulFetchTime is 0", guard.shouldThrottleFetch(currentTime = 1000L))
+
+        // Set fetch timestamp
+        guard.onFetchSuccess(timestamp = 10_000L)
+
+        // Within threshold (< 5000ms)
+        assertTrue("Should throttle within threshold", guard.shouldThrottleFetch(currentTime = 12_000L, thresholdMs = 5000L))
+        assertTrue("Should throttle at 4999ms delta", guard.shouldThrottleFetch(currentTime = 14_999L, thresholdMs = 5000L))
+
+        // Beyond threshold (>= 5000ms)
+        assertFalse("Should not throttle at 5000ms delta", guard.shouldThrottleFetch(currentTime = 15_000L, thresholdMs = 5000L))
+        assertFalse("Should not throttle at 6000ms delta", guard.shouldThrottleFetch(currentTime = 16_000L, thresholdMs = 5000L))
     }
 
     @Test
