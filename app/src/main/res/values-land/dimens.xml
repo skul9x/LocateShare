@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Driver-Safe Touch Target Dimensions for Automotive Landscape (dp >= 56dp / 64dp / 72dp) -->
+    <dimen name="car_button_min_height">56dp</dimen>
+    <dimen name="car_hero_button_height">68dp</dimen>
+    <dimen name="car_hero_button_height_large">72dp</dimen>
+    <dimen name="car_hero_button_reload_size">72dp</dimen>
+    <dimen name="car_rail_icon_size">56dp</dimen>
+    <dimen name="car_rail_tile_size">56dp</dimen>
+    <dimen name="car_rail_width">88dp</dimen>
+
+    <!-- Card & Container Dimensions -->
+    <dimen name="car_card_corner_radius">16dp</dimen>
+    <dimen name="car_card_radius_large">20dp</dimen>
+    <dimen name="car_card_radius_medium">16dp</dimen>
+    <dimen name="car_card_radius_small">14dp</dimen>
+    <dimen name="car_card_radius_pill">50dp</dimen>
+    <dimen name="car_rail_tile_radius">16dp</dimen>
+    <dimen name="car_card_stroke_width">1.5dp</dimen>
+    <dimen name="car_card_padding">16dp</dimen>
+    <dimen name="car_dialog_corner_radius">20dp</dimen>
+    <dimen name="car_badge_corner_radius">8dp</dimen>
+    <dimen name="car_badge_radius_pill">24dp</dimen>
+    <dimen name="car_badge_padding_horizontal">10dp</dimen>
+    <dimen name="car_badge_padding_vertical">4dp</dimen>
+    <dimen name="car_pill_badge_padding_horizontal">14dp</dimen>
+    <dimen name="car_pill_badge_padding_vertical">6dp</dimen>
+    <dimen name="car_pill_badge_dot_size">8dp</dimen>
+
+    <!-- Automotive Glanceable Typography Tokens (sp) -->
+    <dimen name="car_text_hero">28sp</dimen>
+    <dimen name="car_text_title">22sp</dimen>
+    <dimen name="car_text_subtitle">18sp</dimen>
+    <dimen name="car_text_body">16sp</dimen>
+    <dimen name="car_text_caption">13sp</dimen>
+    <dimen name="car_text_small">11sp</dimen>
+
+    <!-- Spacing Tokens -->
+    <dimen name="car_spacing_xs">4dp</dimen>
+    <dimen name="car_spacing_sm">8dp</dimen>
+    <dimen name="car_spacing_md">12dp</dimen>
+    <dimen name="car_spacing_lg">16dp</dimen>
+    <dimen name="car_spacing_xl">24dp</dimen>
+    <dimen name="car_spacing_xxl">32dp</dimen>
+</resources>

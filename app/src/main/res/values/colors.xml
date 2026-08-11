@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Standard Colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Automotive Dark Palette (Glare reduction for in-car screens) -->
+    <color name="car_bg_dark">#0F1015</color>
+    <color name="car_bg_obsidian">#101217</color>
+    <color name="car_bg_obsidian_subtle">#141720</color>
+    <color name="car_card_surface">#1B1D24</color>
+    <color name="car_card_surface_dark">#161922</color>
+    <color name="car_card_surface_elevated">#1E222D</color>
+    <color name="car_card_tile">#1C202B</color>
+    <color name="car_card_tile_stroke">#282D3C</color>
+    <color name="car_card_stroke">#2E3240</color>
+    <color name="car_card_stroke_dark">#252938</color>
+    <color name="car_btn_reload_bg">#222632</color>
+    <color name="car_btn_reload_stroke">#2E3444</color>
+    <color name="car_divider">#242735</color>
+
+    <!-- Automotive Navigation & Accent Green (High Luminous Contrast) -->
+    <color name="car_accent_green">#00E676</color>
+    <color name="car_accent_green_dark">#2E7D32</color>
+    <color name="car_accent_green_pressed">#00C853</color>
+    <color name="car_accent_emerald">#00D26A</color>
+    <color name="car_accent_emerald_bright">#00E676</color>
+    <color name="car_accent_emerald_dark">#132E22</color>
+    <color name="car_accent_emerald_pressed">#00B359</color>
+    <color name="car_pill_badge_bg">#132E22</color>
+    <color name="car_pill_badge_stroke">#00E676</color>
+    <color name="car_pill_badge_dot">#00E676</color>
+    <color name="car_nav_green">#00E676</color>
+    <color name="car_nav_green_dark">#2E7D32</color>
+
+    <!-- Automotive Starred Favorite Gold / Amber / Accent Blue -->
+    <color name="car_starred_gold">#FFD700</color>
+    <color name="car_starred_amber">#FFA000</color>
+    <color name="car_accent_pin">#4F75FF</color>
+
+    <!-- Automotive Driver Rail Tokens -->
+    <color name="car_rail_bg">#15161E</color>
+    <color name="car_rail_item_selected">#252836</color>
+    <color name="car_rail_icon_tint">#8E92A8</color>
+
+    <!-- Automotive Typography Colors -->
+    <color name="car_text_primary">#FFFFFF</color>
+    <color name="car_text_secondary">#B0B3C6</color>
+    <color name="car_text_muted">#7E8299</color>
+    <color name="car_text_accent">#00E676</color>
+    <color name="car_text_subtle">#8E95A5</color>
+
+    <!-- Status & Badge Tokens -->
+    <color name="car_badge_bg">#232634</color>
+    <color name="car_status_connected">#00E676</color>
+    <color name="car_status_syncing">#FFA000</color>
+    <color name="car_status_disconnected">#FF5252</color>
+
+    <!-- Interactive Ripple -->
+    <color name="car_ripple">#33FFFFFF</color>
+</resources>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:scrollbars="vertical"
+    android:background="#121212">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Top Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnBackSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⬅️ Quay lại"
+                android:backgroundTint="#555555"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⚙️ Cài đặt"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:gravity="end"
+                android:layout_marginEnd="8dp" />
+        </LinearLayout>
+
+        <!-- Card Section: Add New Favorite -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_background"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="➕ Thêm Địa Điểm Ưa Thích"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#E91E63"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/etFavName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tên địa điểm (VD: Nhà, Công ty...)"
+                android:inputType="text"
+                android:background="@drawable/input_background"
+                android:backgroundTint="#333333"
+                android:padding="12dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#888888"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etFavUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Link Google Maps"
+                android:inputType="textUri"
+                android:background="@drawable/input_background"
+                android:backgroundTint="#333333"
+                android:padding="12dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#888888"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/btnAddFavorite"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="➕ Thêm địa điểm"
+                android:backgroundTint="#4CAF50"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+
+        <!-- Card Section: Favorites List -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_background"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⭐ Danh sách Ưa thích"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#FF9800"
+                android:layout_marginBottom="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvFavorites"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:scrollbars="vertical"
+                android:clipToPadding="false" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

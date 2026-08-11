@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true"
+    android:background="@color/car_card_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/tvDialogTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✏️ Sửa địa điểm"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/car_text_primary"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên địa điểm gợi nhớ:"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/car_text_secondary"
+            android:layout_marginBottom="6dp" />
+
+        <EditText
+            android:id="@+id/etEditName"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:minHeight="56dp"
+            android:hint="VD: Nhà, Công ty, Bệnh viện..."
+            android:inputType="textCapSentences|text"
+            android:background="@drawable/input_background"
+            android:backgroundTint="@color/car_card_surface_elevated"
+            android:paddingHorizontal="14dp"
+            android:textSize="16sp"
+            android:textColor="@color/car_text_primary"
+            android:textColorHint="@color/car_text_muted"
+            android:layout_marginBottom="14dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Link Google Maps / Tọa độ:"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/car_text_secondary"
+            android:layout_marginBottom="6dp" />
+
+        <EditText
+            android:id="@+id/etEditUrl"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:minHeight="56dp"
+            android:hint="https://maps.app.goo.gl/... hoặc lat,lng"
+            android:inputType="textUri"
+            android:background="@drawable/input_background"
+            android:backgroundTint="@color/car_card_surface_elevated"
+            android:paddingHorizontal="14dp"
+            android:textSize="15sp"
+            android:textColor="@color/car_text_primary"
+            android:textColorHint="@color/car_text_muted" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

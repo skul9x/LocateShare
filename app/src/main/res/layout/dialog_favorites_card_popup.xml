@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardFavoritesDialogContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    app:cardBackgroundColor="#1E1E1E"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="16dp"
+    app:strokeColor="#2E3240"
+    app:strokeWidth="1.5dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvPopupTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⭐ ĐỊA ĐIỂM ƯA THÍCH"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <ImageButton
+                android:id="@+id/btnClosePopup"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:minWidth="56dp"
+                android:minHeight="56dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="#FFFFFF"
+                android:contentDescription="Đóng popup" />
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2E3240"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Empty state placeholder (hidden by default) -->
+        <TextView
+            android:id="@+id/tvEmptyFavorites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:text="Chưa có địa điểm yêu thích nào"
+            android:textColor="#B0B3C6"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:paddingVertical="24dp" />
+
+        <!-- Favorites Cards List with Always-Visible Scrollbar -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvFavoritesPopup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical"
+            android:fadeScrollbars="false"
+            android:scrollbarSize="6dp"
+            android:scrollbarThumbVertical="@drawable/scrollbar_thumb_car"
+            android:clipToPadding="false"
+            android:paddingVertical="4dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

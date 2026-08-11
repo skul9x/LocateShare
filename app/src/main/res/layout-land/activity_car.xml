@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootCarLayout"
+    android:fitsSystemWindows="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/car_bg_obsidian"
+    android:keepScreenOn="true">
+
+    <!-- 1. Left Driver Rail (88dp Obsidian Column) -->
+    <LinearLayout
+        android:id="@+id/layout_driver_rail"
+        android:layout_width="@dimen/car_rail_width"
+        android:layout_height="match_parent"
+        android:background="@color/car_bg_obsidian"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="16dp">
+
+        <!-- Back Button Tile (56dp x 56dp) -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="@dimen/car_rail_tile_size"
+            android:layout_height="@dimen/car_rail_tile_size"
+            android:src="@drawable/ic_arrow_back"
+            android:background="@drawable/bg_car_rail_tile"
+            app:tint="@color/car_text_primary"
+            android:contentDescription="Back" />
+
+        <!-- Wi-Fi Status / Dialog Trigger (56dp x 56dp) -->
+        <ImageButton
+            android:id="@+id/btnWifiSettings"
+            android:layout_width="@dimen/car_rail_tile_size"
+            android:layout_height="@dimen/car_rail_tile_size"
+            android:src="@drawable/ic_wifi"
+            android:background="@drawable/bg_car_rail_tile"
+            app:tint="@color/car_text_primary"
+            android:contentDescription="Wi-Fi Settings"
+            android:layout_marginTop="12dp" />
+
+        <!-- Dedicated Supabase Cloud Sync Status Indicator Tile (56dp x 56dp) -->
+        <FrameLayout
+            android:layout_width="@dimen/car_rail_tile_size"
+            android:layout_height="@dimen/car_rail_tile_size"
+            android:background="@drawable/bg_car_rail_tile"
+            android:layout_marginTop="12dp">
+
+            <ImageView
+                android:id="@+id/ivSyncStatus"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_sync"
+                app:tint="@color/car_status_connected"
+                android:contentDescription="Sync Status" />
+        </FrameLayout>
+
+        <!-- Starred Fast Launcher Button Tile (56dp x 56dp) -->
+        <ImageButton
+            android:id="@+id/btnStarredQuick"
+            android:layout_width="@dimen/car_rail_tile_size"
+            android:layout_height="@dimen/car_rail_tile_size"
+            android:src="@drawable/ic_star"
+            android:background="@drawable/bg_car_rail_tile"
+            app:tint="@color/car_starred_gold"
+            android:contentDescription="Starred Favorite"
+            android:layout_marginTop="12dp" />
+
+        <!-- Vertical Spacer -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Settings Button Tile (56dp x 56dp) -->
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="@dimen/car_rail_tile_size"
+            android:layout_height="@dimen/car_rail_tile_size"
+            android:src="@drawable/ic_settings"
+            android:background="@drawable/bg_car_rail_tile"
+            app:tint="@color/car_text_secondary"
+            android:contentDescription="Settings" />
+
+    </LinearLayout>
+
+    <!-- Main Content Container (Hero Card + Quick Favorites) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:weightSum="100"
+        android:padding="12dp">
+
+        <!-- 2. Center Primary Hero Card (~55%) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCurrentLocation"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="55"
+            android:layout_marginEnd="8dp"
+            app:cardBackgroundColor="@color/car_card_surface_dark"
+            app:cardCornerRadius="@dimen/car_card_radius_large"
+            app:cardElevation="4dp"
+            app:strokeColor="@color/car_card_stroke_dark"
+            app:strokeWidth="@dimen/car_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="@dimen/car_card_padding">
+
+                <!-- Sync Status Pill Header Badge -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_car_pill_badge"
+                    android:paddingHorizontal="@dimen/car_pill_badge_padding_horizontal"
+                    android:paddingVertical="@dimen/car_pill_badge_padding_vertical">
+
+                    <TextView
+                        android:id="@+id/tvSyncHeader"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="● ĐÃ ĐỒNG BỘ TỪ ĐIỆN THOẠI"
+                        android:textSize="@dimen/car_text_caption"
+                        android:textStyle="bold"
+                        android:textColor="@color/car_accent_emerald_bright" />
+
+                    <TextView
+                        android:id="@+id/tvSyncTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="  •  14:49:06"
+                        android:textSize="@dimen/car_text_caption"
+                        android:textColor="@color/car_text_subtle" />
+                </LinearLayout>
+
+                <!-- Location Header Title -->
+                <TextView
+                    android:id="@+id/tvLocationName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Đang chờ địa điểm..."
+                    android:textSize="@dimen/car_text_hero"
+                    android:textStyle="bold"
+                    android:textColor="@color/car_text_primary"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:layout_marginTop="16dp" />
+
+                <!-- Location Address / URL Subtitle -->
+                <TextView
+                    android:id="@+id/tvLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Chưa có địa điểm nào được chia sẻ"
+                    android:textSize="@dimen/car_text_body"
+                    android:textColor="@color/car_text_subtle"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:layout_marginTop="8dp" />
+
+                <!-- Flexible Vertical Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <!-- Action Button Row: Giant 72dp Open Map + 72dp Square Reload -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="16dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOpenMap"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/car_hero_button_height_large"
+                        android:layout_weight="1"
+                        android:minHeight="72dp"
+                        android:text="MỞ BẢN ĐỒ"
+                        android:textSize="@dimen/car_text_title"
+                        android:textStyle="bold"
+                        android:textColor="@color/white"
+                        app:backgroundTint="@color/car_accent_emerald_bright"
+                        app:cornerRadius="@dimen/car_card_radius_large"
+                        app:icon="@drawable/ic_navigation"
+                        app:iconSize="28dp"
+                        app:iconGravity="textStart"
+                        app:iconPadding="10dp"
+                        app:iconTint="@color/white"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReload"
+                        android:layout_width="@dimen/car_hero_button_reload_size"
+                        android:layout_height="@dimen/car_hero_button_height_large"
+                        android:minHeight="72dp"
+                        android:layout_marginStart="12dp"
+                        app:backgroundTint="@color/car_btn_reload_bg"
+                        app:strokeColor="@color/car_btn_reload_stroke"
+                        app:strokeWidth="1.5dp"
+                        app:cornerRadius="@dimen/car_card_radius_large"
+                        app:icon="@drawable/ic_refresh"
+                        app:iconSize="28dp"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconTint="@color/car_text_primary"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:contentDescription="Reload" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 3. Right Quick Favorites Panel (~45%) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardQuickFavorites"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="45"
+            android:layout_marginStart="8dp"
+            app:cardBackgroundColor="@color/car_card_surface_dark"
+            app:cardCornerRadius="@dimen/car_card_radius_large"
+            app:cardElevation="4dp"
+            app:strokeColor="@color/car_card_stroke_dark"
+            app:strokeWidth="@dimen/car_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="@dimen/car_card_padding">
+
+                <!-- Header Bar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvFavoritesTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="⭐ ĐỊA ĐIỂM ƯA THÍCH"
+                        android:textSize="@dimen/car_text_subtitle"
+                        android:textStyle="bold"
+                        android:textColor="@color/car_starred_gold" />
+
+                    <Button
+                        android:id="@+id/btnFavorites"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tất cả ↗"
+                        android:textSize="@dimen/car_text_caption"
+                        android:textColor="@color/car_text_secondary"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="8dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+                <!-- Quick Favorites List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvQuickFavorites"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:scrollbars="vertical"
+                    android:clipToPadding="false" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</LinearLayout>

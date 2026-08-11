@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:keepScreenOn="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:weightSum="100"
+    android:background="@color/car_bg_dark"
+    android:padding="14dp">
+
+    <!-- Left Master Pane (35% width): App Preferences & Status -->
+    <LinearLayout
+        android:id="@+id/layoutSettingsLeft"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="35"
+        android:orientation="vertical"
+        android:layout_marginEnd="10dp">
+
+        <!-- Header: Back Button + Title -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <Button
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:minHeight="56dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="18dp"
+                android:text="⬅️ Quay lại"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/car_text_primary"
+                android:backgroundTint="@color/car_card_surface_elevated"
+                app:cornerRadius="12dp"
+                android:contentDescription="Quay lại" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⚙️ CÀI ĐẶT"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:textColor="@color/car_text_primary"
+                android:gravity="end"
+                android:layout_marginEnd="4dp" />
+        </LinearLayout>
+
+        <!-- Scrollable Cards in Master Pane -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Cloud Connection Status Card -->
+                <LinearLayout
+                    android:id="@+id/cardConnectionStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_car_card"
+                    android:padding="14dp"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌐 KẾT NỐI SUPABASE CLOUD"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/car_text_muted" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+
+                        <ImageView
+                            android:id="@+id/ivStatusDot"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:src="@drawable/bg_status_dot_connected"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="Status indicator" />
+
+                        <TextView
+                            android:id="@+id/tvStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Đang kết nối..."
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/car_status_connected" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvCloudUrl"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cloud Sync: Realtime Active"
+                        android:textSize="12sp"
+                        android:textColor="@color/car_text_secondary"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- Starred Destination Summary Card -->
+                <LinearLayout
+                    android:id="@+id/cardStarredLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_car_card"
+                    android:padding="14dp"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⭐ ĐỊA ĐIỂM MẶC ĐỊNH (1-CHẠM)"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/car_starred_amber" />
+
+                    <TextView
+                        android:id="@+id/tvStarredName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Chưa có địa điểm mặc định ⭐"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/car_text_primary"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:layout_marginTop="6dp" />
+
+                    <TextView
+                        android:id="@+id/tvStarredUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Bấm ⭐ trong danh sách để chọn nhanh"
+                        android:textSize="12sp"
+                        android:textColor="@color/car_text_secondary"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:layout_marginTop="3dp" />
+                </LinearLayout>
+
+                <!-- App Information Card -->
+                <LinearLayout
+                    android:id="@+id/cardAppInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_car_card"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📱 THÔNG TIN HỆ THỐNG"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/car_text_muted" />
+
+                    <TextView
+                        android:id="@+id/tvVersionInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="LocateShare v2.0 - Car Landscape\nAndroid 13 (API 33+) Compatible"
+                        android:textSize="13sp"
+                        android:textColor="@color/car_text_secondary"
+                        android:layout_marginTop="6dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
+
+    <!-- Right Detail Pane (65% width): Favorites CRUD Management -->
+    <LinearLayout
+        android:id="@+id/layoutSettingsRight"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="65"
+        android:orientation="vertical"
+        android:background="@drawable/bg_car_card"
+        android:padding="14dp"
+        android:layout_marginStart="4dp">
+
+        <!-- Header: Title + Count Badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⭐ QUẢN LÝ ĐỊA ĐIỂM YÊU THÍCH"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/car_text_primary" />
+
+            <TextView
+                android:id="@+id/tvFavoritesCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 địa điểm"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/car_text_secondary"
+                android:background="@drawable/bg_car_badge"
+                android:paddingStart="@dimen/car_badge_padding_horizontal"
+                android:paddingEnd="@dimen/car_badge_padding_horizontal"
+                android:paddingTop="@dimen/car_badge_padding_vertical"
+                android:paddingBottom="@dimen/car_badge_padding_vertical" />
+        </LinearLayout>
+
+        <!-- Favorites RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvFavorites"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scrollbars="vertical"
+            android:clipToPadding="false"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="10dp" />
+
+        <!-- Oversized "+ THÊM ĐỊA ĐIỂM" Button -->
+        <Button
+            android:id="@+id/btnAddFavorite"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:minHeight="56dp"
+            android:text="➕ THÊM ĐỊA ĐIỂM MỚI"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@color/car_bg_dark"
+            app:backgroundTint="@color/car_accent_green"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
+
+</LinearLayout>
